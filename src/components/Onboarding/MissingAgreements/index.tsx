@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '../Common/Header';
 import { ClaimUpTo } from '../Common/Claimupto';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { useTenant } from '../../../contexts/TenantContext';
 
 const lenders = [
   'Bnp Paribas Personal Finance',
@@ -46,6 +47,7 @@ const MissingAgreements: React.FC = () => {
   const [open, setOpen] = useState(true);
   const [selected, setSelected] = useState<string[]>([]);
   const navigate = useNavigate();
+  const { config } = useTenant();
 
   const toggleSelect = (l: string) => {
     setSelected((prev) => (prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]));
@@ -68,14 +70,14 @@ const MissingAgreements: React.FC = () => {
             No agreements found automatically.
           </Text>
           <Text fontSize="sm" textAlign="center" maxW="lg" mx="auto">
-            We could not find car finance agreements in your credit report, but don’t worry! You can
+            We could not find car finance agreements in your credit report, but don't worry! You can
             manually select your finance providers below.
           </Text>
 
-          {/* Purple info bar */}
-          <Box bg="#F4F0FF" borderRadius="md" p={3} fontSize="sm" fontWeight="medium" border="1px solid #DED6F5">
+          {/* Purple info bar - now using tenant accent light color */}
+          <Box bg={config.accentLightColor} borderRadius="md" p={3} fontSize="sm" fontWeight="medium" border="1px solid" borderColor={`${config.accentColor}40`}>
             <Flex align="center">
-              <Icon as={ExclamationCircleIcon} w={4} h={4} mr={2} />
+              <Icon as={ExclamationCircleIcon} w={4} h={4} mr={2} color={config.accentColor} />
               <Text fontFamily="Poppins">
                 Over the <Text as="span" fontWeight="bold">next 24 hours</Text> we will receive more of your agreements going back to 2007.
               </Text>
@@ -90,14 +92,14 @@ const MissingAgreements: React.FC = () => {
             ZUTO FINANCE
           </Box>
           <Text fontSize="sm" textAlign="center" maxW="lg" mx="auto">
-            Any lenders that we don’t get over the next 24 hours. We will request the information
+            Any lenders that we don't get over the next 24 hours. We will request the information
             directly from your lender. <strong >We need your ID for this on the next page.</strong>
           </Text>
           <Text fontSize="md" textAlign="center" fontWeight="bold">
             Any missing agreements?
           </Text>
           <Text fontSize="xs" textAlign="center">
-            Add them on now and we’ll request the documents from your lenders!
+            Add them on now and we'll request the documents from your lenders!
           </Text>
 
           {/* Select lenders */}
@@ -137,7 +139,7 @@ const MissingAgreements: React.FC = () => {
                       borderBottom="1px solid #E2E8F0"
                       cursor="pointer"
                       _hover={{ bg: '#F9FAFB' }}
-                      bg={isSel ? '#F3F0FF' : 'white'}
+                      bg={isSel ? config.accentLightColor : 'white'}
                       onClick={() => toggleSelect(l)}
                     >
                       <Flex align="center" justify="space-between">
@@ -149,13 +151,13 @@ const MissingAgreements: React.FC = () => {
                           h="20px"
                           borderRadius="full"
                           border="2px solid" 
-                          borderColor={isSel ? '#5B34C8' : '#E9ECF0'}
+                          borderColor={isSel ? config.accentColor : '#E9ECF0'}
                           bg="white"
                           display="flex"
                           alignItems="center"
                           justifyContent="center"
                         >
-                          {isSel && <Check size={12} color="#5B34C8" strokeWidth={3} />}
+                          {isSel && <Check size={12} color={config.accentColor} strokeWidth={3} />}
                         </Box>
                       </Flex>
                     </Box>
@@ -166,11 +168,11 @@ const MissingAgreements: React.FC = () => {
           </Box>
 
           <Button
-            bg="#B8FF8D"
+            bg={config.primaryColor}
             color="black"
             h="56px"
             borderRadius="full"
-            _hover={{ bg: '#A8EF7D' }}
+            _hover={{ bg: `${config.primaryColor}80` }}
             fontWeight="medium"
             onClick={handleContinue}
             rightIcon={<Text as="span" ml={1}>→</Text>}

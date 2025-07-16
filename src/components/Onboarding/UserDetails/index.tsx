@@ -170,7 +170,7 @@ export const UserDetailsPage: React.FC = () => {
                     _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
                     height="56px"
                     fontSize="lg"
-                    color="gray.300"
+                    color="gray.500"
                     textAlign="left"
                     fontFamily="Poppins"
                     _placeholder={{ color: "gray.400", fontSize: "lg" }}
