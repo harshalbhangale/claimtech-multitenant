@@ -1,22 +1,22 @@
-import { Box, VStack, Text, Button, Image, Input, HStack, Icon, useClipboard } from '@chakra-ui/react';
-import { ArrowLeftIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline';
+import { Box, Text, Button, Image, Input, HStack, Icon, useClipboard } from '@chakra-ui/react';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Header } from '../Main/Header';
-
+import { Header } from '../MainPage/Header';
+import { useTenant } from '../../../contexts/TenantContext';
 const Refer = () => {
   const [referralLink] = useState('https://claim.resolvemyclaim.co.uk/claims_referral=12345');
   const { hasCopied, onCopy } = useClipboard(referralLink);
-
+  const { config } = useTenant();
   return (
     <Box minH="100vh" bg="#F9F9FB">
       <Header />
       <Box maxW="container.sm" mx="auto" px={4} py={6}>
         {/* Back button */}
         <Link to="/dashboard">
-          <HStack spacing={2} mb={6}>
-            <Icon as={ArrowLeftIcon} w={6} h={6} />
-            <Text fontWeight="medium" fontSize="md" fontFamily="Poppins">All claims</Text>
+          <HStack spacing={1} mb={6}>
+            <Icon as={ArrowLeftIcon} w={6} h={6} color="gray.800"/>
+            <Text fontWeight="medium" fontSize="md" fontFamily="Poppins" color="gray.800">All claims</Text>
           </HStack>
         </Link>
 
@@ -86,26 +86,27 @@ const Refer = () => {
               isReadOnly
               bg="white"
               borderRadius="md"
+              py={6}
               fontSize="sm"
               pr="70px"
               border="1px solid"
-              borderColor="gray.200"
+              borderColor="gray.300"
               color="gray.700"
               fontFamily="Poppins"
             />
             <Button
               position="absolute"
               right={4}
-              bg="#B8FF8D"
+              bg={config.primaryColor}
               color="black"
               size="sm"
               onClick={onCopy}
               borderRadius="full"
-              _hover={{ bg: '#a5e67f' }}
+              _hover={{ bg: `${config.primaryColor}80` }}
               fontFamily="Poppins"
               fontWeight="semibold"
               border="1px solid"
-              borderColor="#a5e67f"
+              borderColor={`${config.primaryColor}80`}
               px={4}
             >
               {hasCopied ? "Copied!" : "Copy"}

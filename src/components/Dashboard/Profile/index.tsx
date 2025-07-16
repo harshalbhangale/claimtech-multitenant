@@ -1,8 +1,10 @@
-import { Box, VStack, Text, HStack, Button, Input, SimpleGrid, Icon, Radio, RadioGroup, useToast, Image } from '@chakra-ui/react';
+import { Box, VStack, Text, HStack, Button, Input, SimpleGrid, Icon, Radio, RadioGroup, useToast} from '@chakra-ui/react';
 import { DocumentCheckIcon, GiftIcon, ArrowRightOnRectangleIcon, ChevronRightIcon, CheckIcon, DocumentIcon } from '@heroicons/react/24/outline';
 import { useRef, useState } from 'react';
+import { useTenant } from '../../../contexts/TenantContext';
 
 const Profile = () => {
+  const { config } = useTenant();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -93,7 +95,7 @@ const Profile = () => {
             p={5}
             borderRadius="xl"
             boxShadow="sm"
-            border="1px solid"
+            border="1.5px solid"
             borderColor="gray.100"
             _hover={{ bg: 'gray.50', borderColor: 'gray.200' }}
             w="full"
@@ -112,19 +114,19 @@ const Profile = () => {
                   w={12}
                   h={12}
                   borderRadius="full"
-                  bg="#F3F0FA"
+                  bg={config.accentLightColor}
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
                   border="1px solid"
-                  borderColor="#E6E0F5"
+                  borderColor={config.accentLightColor}
                 >
-                  <Icon as={action.icon} w={6} h={6} color="#6A47CF" />
+                  <Icon as={action.icon} w={6} h={6} color={config.accentColor} />
                 </Box>
                 <Text fontFamily="Poppins" fontSize="lg" fontWeight="medium">
                   {action.text}
                   {action.count && (
-                    <Box as="span" ml={3} color="#6A47CF" fontWeight="semibold">
+                    <Box as="span" ml={3} color={config.accentColor} fontWeight="semibold">
                       {action.count}
                     </Box>
                   )}
@@ -138,18 +140,18 @@ const Profile = () => {
 
       {/* Your Details Section */}
       <HStack justify="space-between" align="center" mb={6}>
-        <Text color="gray.500" fontSize="sm" fontWeight="medium">
+        <Text color={config.accentColor} fontSize="md" fontWeight="bold">
           Your details
         </Text>
         <Button
           variant="outline"
           size="sm"
           borderRadius="full"
-          borderColor="#6A47CF"
-          color="#6A47CF"
+          borderColor={config.accentColor}
+          color={config.accentColor}
           fontWeight="medium"
           px={6}
-          _hover={{ bg: '#F3F0FA' }}
+          _hover={{ bg: config.accentLightColor }}
         >
           Edit Profile
         </Button>
@@ -165,7 +167,7 @@ const Profile = () => {
           fontSize="md"
           fontFamily="Poppins"
           size="lg"
-          border="1px solid"
+          border="1.5px solid"
           borderColor="gray.200"
           _hover={{ borderColor: 'gray.300' }}
         />
@@ -177,7 +179,7 @@ const Profile = () => {
           fontSize="md"
           fontFamily="Poppins"
           size="lg"
-          border="1px solid"
+          border="1.5px solid"
           borderColor="gray.200"
           _hover={{ borderColor: 'gray.300' }}
         />
@@ -190,7 +192,7 @@ const Profile = () => {
           color="gray.400"
           fontFamily="Poppins"
           size="lg"
-          border="1px solid"
+          border="1.5px solid"
           borderColor="gray.200"
           _hover={{ borderColor: 'gray.300' }}
         />
@@ -202,7 +204,7 @@ const Profile = () => {
           fontSize="md"
           fontFamily="Poppins"
           size="lg"
-          border="1px solid"
+          border="1.5px solid"
           borderColor="gray.200"
           _hover={{ borderColor: 'gray.300' }}
         />
@@ -214,7 +216,7 @@ const Profile = () => {
           fontSize="md"
           fontFamily="Poppins"
           size="lg"
-          border="1px solid"
+          border="1.5px solid"
           borderColor="gray.200"
           _hover={{ borderColor: 'gray.300' }}
         />
@@ -229,7 +231,7 @@ const Profile = () => {
               fontSize="md"
               fontFamily="Poppins"
               size="lg"
-              border="1px solid"
+              border="1.5px solid"
               borderColor="gray.200"
               _hover={{ borderColor: 'gray.300' }}
             />
@@ -248,7 +250,7 @@ const Profile = () => {
         p={6} 
         borderRadius="xl" 
         mb={6} 
-        border="1px solid"
+        border="1.5px solid"
         borderColor="gray.100"
         boxShadow="sm"
       >
@@ -267,7 +269,7 @@ const Profile = () => {
                 <HStack spacing={6}>
                   <Radio 
                     value="yes" 
-                    colorScheme="purple"
+                    color={config.primaryColor}
                     size="lg"
                     borderColor="gray.300"
                   >
@@ -275,7 +277,7 @@ const Profile = () => {
                   </Radio>
                   <Radio 
                     value="no" 
-                    colorScheme="purple"
+                    color={config.primaryColor}
                     size="lg"
                     borderColor="gray.300"
                   >
@@ -294,7 +296,7 @@ const Profile = () => {
         p={6} 
         borderRadius="xl" 
         mb={8}
-        border="1px solid"
+        border="1.5px solid"
         borderColor="gray.100"
         boxShadow="sm"
       >
@@ -311,11 +313,11 @@ const Profile = () => {
             variant="outline"
             size="sm"
             borderRadius="full"
-            borderColor="#6A47CF"
-            color="#6A47CF"
+            borderColor={config.accentColor}
+            color={config.accentColor}
             fontWeight="bold"
             px={6}
-            _hover={{ bg: '#F3F0FA' }}
+            _hover={{ bg: config.accentLightColor }}
             onClick={() => fileInputRef.current?.click()}
             isLoading={isUploading}
           >
@@ -344,11 +346,11 @@ const Profile = () => {
             
             <Button
               w="full"
-              bg="#B8FF8D"
+              bg={config.primaryColor}
               color="black"
               size="md"
               borderRadius="full"
-              _hover={{ bg: '#a5e67f' }}
+              _hover={{ bg: `${config.primaryColor}80` }}
               fontFamily="Poppins"
               fontWeight="semibold"
               onClick={handleUpload}
@@ -365,12 +367,12 @@ const Profile = () => {
       {/* Update Button */}
       <Button
         w="full"
-        bg="#B8FF8D"
+        bg={config.primaryColor}
         color="black"
         size="lg"
         height="56px"
         borderRadius="full"
-        _hover={{ bg: '#a5e67f' }}
+        _hover={{ bg: `${config.primaryColor}80` }}
         fontFamily="Poppins"
         fontSize="lg"
         fontWeight="semibold"

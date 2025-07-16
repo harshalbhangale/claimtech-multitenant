@@ -9,7 +9,7 @@ import {
 } from '@chakra-ui/react';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
-
+import { useTenant } from '../../../contexts/TenantContext';
 interface ActionBannerProps {
   onUploadId?: () => void;
   label?: string;
@@ -25,7 +25,7 @@ const ActionBanner: React.FC<ActionBannerProps> = ({
   buttonText = 'Upload ID Document',
 }) => {
   const navigate = useNavigate();
-  
+  const { config } = useTenant();
   const handleClick = () => {
     if (onUploadId) {
       onUploadId();
@@ -50,13 +50,13 @@ const ActionBanner: React.FC<ActionBannerProps> = ({
         </HStack>
 
         <Button
-          bg="#B8FF8D"
+          bg={config.primaryColor}
           color="black"
-          _hover={{ bg: '#A8EF7D' }}
+          _hover={{ bg: `${config.primaryColor}80` }}
           borderRadius="full"
           h="32px"
           px={6}
-          fontWeight="bold"
+          fontWeight="md"
           fontSize="sm"
           onClick={handleClick}
         >

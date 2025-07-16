@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flex, Image, Box, Heading } from '@chakra-ui/react';
+import { Flex, Image, Box } from '@chakra-ui/react';
 import { useTenant } from '../../../contexts/TenantContext';
 
 export const Header: React.FC = () => {

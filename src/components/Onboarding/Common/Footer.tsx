@@ -79,7 +79,7 @@ export const Footer: React.FC = () => {
                 textAlign="justify"
                 fontWeight="medium"
               >
-                ResolveMyClaim is a trading style of Solvo Solutions Ltd, authorised and regulated by the Financial 
+                {config.name} is a trading style of Solvo Solutions Ltd, authorised and regulated by the Financial 
                 Conduct Authority for claims management referrals (FRN: 1013195), registered in England and Wales 
                 Registration Number: 14760023, address is Suite 105, Earl Business Centre, Dowry Street, Oldham, England, 
                 OL8 2PF

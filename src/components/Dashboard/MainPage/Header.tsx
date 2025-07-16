@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flex, Image, Box, Heading } from '@chakra-ui/react';
+import { Flex, Image, Box } from '@chakra-ui/react';
 import { useTenant } from '../../../contexts/TenantContext';
 import { UserIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +30,7 @@ export const Header: React.FC = () => {
         
         {/* User Icon */}
         <Box  
-          bg="#5B34C9" 
+          bg={config.accentColor}
           p={2} 
           borderRadius="full" 
           color="white" 

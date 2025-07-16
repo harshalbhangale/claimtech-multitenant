@@ -3,13 +3,11 @@ import {
   Container,
   VStack,
   Text,
-  Button,
   Box,
   Flex,
   HStack,
   Input,
   Image,
-  Link,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../Common/Header';
@@ -144,7 +142,7 @@ export const UserDetailsPage: React.FC = () => {
                     }}
                     bg="white"
                     border="1px solid"
-                    borderColor="gray.200"
+                    borderColor="gray.300"
                     borderRadius="xl"
                     _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
                     height="56px"

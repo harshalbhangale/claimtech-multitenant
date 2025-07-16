@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flex, Text, Circle, VStack, HStack, SimpleGrid, Box } from '@chakra-ui/react';
+import { Text, Circle, VStack, SimpleGrid, Box } from '@chakra-ui/react';
 import { useTenant } from '../../../contexts/TenantContext';
 
 export const SecureBar: React.FC = () => {

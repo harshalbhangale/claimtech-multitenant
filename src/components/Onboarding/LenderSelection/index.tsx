@@ -6,9 +6,7 @@ import {
   Button,
   Box,
   Flex,
-  HStack,
   Link,
-  Image,
   Icon,
 } from '@chakra-ui/react';
 import { ChevronDown, Check } from 'lucide-react';
@@ -130,7 +128,7 @@ const LenderSelection: React.FC = () => {
           {/* Lenders List */}
           <Box w="full" maxW={{ base: "full", md: "2xl" }}>
             <VStack spacing={3} w="full" mb={4}>
-              {mainLenders.map((lender, idx) => {
+              {mainLenders.map((lender, _idx) => {
                 const isSelected = selectedLenders.includes(lender);
                 return (
                   <Box

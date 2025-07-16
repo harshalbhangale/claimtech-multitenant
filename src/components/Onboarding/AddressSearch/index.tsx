@@ -7,7 +7,6 @@ import {
   Input,
   Button,
   HStack,
-  Image,
   Flex,
 } from '@chakra-ui/react';
 import { ChevronDown } from 'lucide-react';

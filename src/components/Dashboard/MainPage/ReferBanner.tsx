@@ -6,7 +6,7 @@ import {
   Button,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-
+import { useTenant } from '../../../contexts/TenantContext';
 interface ReferProps {
   onRefer?: () => void;
 }
@@ -16,7 +16,7 @@ interface ReferProps {
  */
 const Refer: React.FC<ReferProps> = ({ onRefer }) => {
   const navigate = useNavigate();
-  
+  const { config } = useTenant();
   const handleClick = () => {
     if (onRefer) {
       onRefer();
@@ -26,7 +26,7 @@ const Refer: React.FC<ReferProps> = ({ onRefer }) => {
 
   return (
     <Box
-      border="1px solid #FFECC0"
+      border="2px solid #FFECC0"
       bg="#FFFDF4"
       p={5}
       borderRadius="lg"
@@ -43,9 +43,9 @@ const Refer: React.FC<ReferProps> = ({ onRefer }) => {
         </Box>
 
         <Button
-          bg="#B8FF8D"
+          bg={config.primaryColor}
           color="black"
-          _hover={{ bg: '#A8EF7D' }}
+          _hover={{ bg: `${config.primaryColor}80` }}
           borderRadius="full"
           h="36px"
           px={6}

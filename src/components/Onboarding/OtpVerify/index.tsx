@@ -6,10 +6,6 @@ import {
   Text,
   Input,
   Button,
-  Link,
-  HStack,
-  Flex,
-  Circle,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../Common/Header';
@@ -31,7 +27,6 @@ const OtpVerify: React.FC = () => {
     alert('Verification code resent');
   };
 
-  const isValid = code.trim().length > 0;
 
   return (
     <Box minH="100vh" bg="white">

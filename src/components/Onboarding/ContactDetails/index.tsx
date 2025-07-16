@@ -5,10 +5,7 @@ import {
   VStack,
   Text,
   Input,
-  Button,
-  HStack,
   Image,
-  Flex,
   InputGroup,
   InputRightElement,
   Link,
@@ -60,8 +57,6 @@ const ContactDetails: React.FC = () => {
       navigate('/auth/signature');
     }
   };
-
-  const isFormValid = !validateMobile(mobile) && !validateEmail(email);
 
   return (
     <Box minH="100vh" bg="white" w="100%">

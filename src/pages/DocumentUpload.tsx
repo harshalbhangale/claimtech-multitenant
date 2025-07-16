@@ -1,8 +1,8 @@
 import { VStack, Heading, Text, Button, Image, SimpleGrid, Box, Icon, HStack, Input } from '@chakra-ui/react';
-import { IdentificationIcon, InformationCircleIcon, LockClosedIcon, BanknotesIcon, ShieldCheckIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { IdentificationIcon, InformationCircleIcon, LockClosedIcon,  ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { useState, useRef } from 'react';
 
-import { Header } from '@/components/Dashboard/Main/Header';
+import { Header } from '@/components/Dashboard/MainPage/Header';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 const DocumentUpload = () => {

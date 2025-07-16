@@ -1,17 +1,25 @@
 export const getSubdomain = (): string => {
-  // Temporary override for testing - change this to test different tenants
-  console.log('getSubdomain - Forcing blueclaims');
-  return 'blueclaims';
-  
   const hostname = window.location.hostname;
+  console.log('getSubdomain - hostname:', hostname);
   const parts = hostname.split('.');
+  console.log('getSubdomain - parts:', parts);
   
-  // Check if there's a subdomain (more than 2 parts, e.g., resolvemyclaim.localhost:5173)
-  if (parts.length > 2) {
+  // Check for localhost subdomains (e.g., resolvemyclaim.localhost or blueclaims.localhost)
+  if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
+    const subdomain = parts[0];
+    console.log('getSubdomain - detected subdomain:', subdomain);
+    return subdomain;
+  }
+  
+  // Check for production subdomains (more than 2 parts, e.g., resolvemyclaim.example.com)
+  if (parts.length > 2 && parts[parts.length - 1] !== 'localhost') {
+    const subdomain = parts[0];
+    console.log('getSubdomain - detected production subdomain:', subdomain);
     return parts[0];
   }
   
   // Default to 'resolvemyclaim' if no subdomain is detected or on localhost:5173 without subdomain
+  console.log('getSubdomain - using default: resolvemyclaim');
   return 'resolvemyclaim';
 };
 
@@ -31,7 +39,7 @@ export const getTenantConfig = (subdomain: string) => {
     },
     'blueclaims': {
       name: 'blueclaims',
-      primaryColor: '#007BFF',
+      primaryColor: '#3695F7',
       accentColor: '#0056b3',
       accentLightColor: '#E8F0FF',
       completedColor: '#50C878',

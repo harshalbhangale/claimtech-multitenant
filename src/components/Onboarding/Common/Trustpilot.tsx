@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Flex, Image, Text, VStack } from '@chakra-ui/react';
+import { Image,  VStack } from '@chakra-ui/react';
 
 interface TrustpilotProps {
   size?: 'sm' | 'md' | 'lg';
