@@ -6,7 +6,7 @@ export const Header: React.FC = () => {
   const { config } = useTenant();
 
   return (
-    <Box textAlign="center" py={1}>
+    <Box textAlign="center" py={1} mb={2}>
       <Flex 
         maxW="3xl"
         mx="auto"

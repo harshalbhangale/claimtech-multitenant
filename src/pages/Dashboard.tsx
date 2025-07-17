@@ -5,10 +5,10 @@ import {
   VStack,
   Text,
 } from '@chakra-ui/react';
-import { Header } from '../components/Dashboard/MainPage/Header';
-import { Refer } from '../components/Dashboard/MainPage/ReferBanner';
-import { ActionBanner } from '../components/Dashboard/MainPage/ActionRequiredBanner';
-import { OpenClaims } from '../components/Dashboard/MainPage/OpenClaims';
+import { Header } from '../components/Dashboard/Main/Header';
+import { Refer } from '../components/Dashboard/Main/ReferBanner';
+import { ActionBanner } from '../components/Dashboard/Main/ActionRequiredBanner';
+import { OpenClaims } from '../components/Dashboard/Main/OpenClaims';
 
 const Dashboard: React.FC = () => {
   return (

@@ -88,7 +88,7 @@ const MissingAgreements: React.FC = () => {
           <Box bg="#FAFAFA" p={3} fontSize="sm" fontWeight="bold" borderRadius="md">
             We have not received agreement details for these lenders:
           </Box>
-          <Box border="1px solid #E2E8F0" fontWeight="bold" p={3} fontSize="sm" borderRadius="md">
+          <Box border="1.5px solid #E2E8F0" fontWeight="bold" p={3} fontSize="sm" borderRadius="md">
             ZUTO FINANCE
           </Box>
           <Text fontSize="sm" textAlign="center" maxW="lg" mx="auto">
@@ -103,7 +103,7 @@ const MissingAgreements: React.FC = () => {
           </Text>
 
           {/* Select lenders */}
-          <Box border="1px solid #E2E8F0" borderRadius="lg">
+          <Box border="1.5px solid #E2E8F0" borderRadius="lg">
             <Flex
               onClick={() => setOpen(!open)}
               align="center"
@@ -128,7 +128,7 @@ const MissingAgreements: React.FC = () => {
                   _focus={{ outline: 'none' }}
                 />
               </HStack>
-              <Box maxH="260px" overflowY="auto">
+              <Box maxH="260px" overflowY="auto" >
                 {filtered.map((l) => {
                   const isSel = selected.includes(l);
                   return (
@@ -136,7 +136,7 @@ const MissingAgreements: React.FC = () => {
                       key={l}
                       px={4}
                       py={3}
-                      borderBottom="1px solid #E2E8F0"
+                      borderBottom="2px solid #E2E8F0"
                       cursor="pointer"
                       _hover={{ bg: '#F9FAFB' }}
                       bg={isSel ? config.accentLightColor : 'white'}

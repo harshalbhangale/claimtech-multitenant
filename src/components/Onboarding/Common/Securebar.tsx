@@ -16,7 +16,7 @@ export const SecureBar: React.FC = () => {
       <VStack align="center" textAlign="center" spacing={{ base: 3, md: 3 }}>
         <Circle 
           size={{ base: "40px", md: "40px" }} 
-          bg="#EEEBFA" 
+          bg={config.accentLightColor} 
           mb={{ base: 0, md: 0 }}
           display="flex"
           alignItems="center"
@@ -60,7 +60,7 @@ export const SecureBar: React.FC = () => {
       <VStack align="center" textAlign="center" spacing={{ base: 3, md: 3 }}>
         <Circle 
           size={{ base: "40px", md: "40px" }} 
-          bg="#EEEBFA" 
+          bg={config.accentLightColor} 
           mb={{ base: 0, md: 0 }}
           display="flex"
           alignItems="center"
@@ -104,7 +104,7 @@ export const SecureBar: React.FC = () => {
       <VStack align="center" textAlign="center" spacing={{ base: 3, md: 3 }}>
         <Circle 
           size={{ base: "40px", md: "40px" }} 
-          bg="#EEEBFA" 
+          bg={config.accentLightColor} 
           mb={{ base: 0, md: 0 }}
           display="flex"
           alignItems="center"

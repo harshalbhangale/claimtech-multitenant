@@ -17,39 +17,15 @@ import { ProgressBar } from '../Common/ProgressBar';
 import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import Trustpilot from '../../Onboarding/Common/Trustpilot';
+import { fetchAddressesByPostcode } from '../../../api/AddressSearch';
 
 const AddressSearch: React.FC = () => {
   const navigate = useNavigate();
   const { config } = useTenant();
   const [postcode, setPostcode] = useState('');
-  const [addresses, setAddresses] = useState<{ id: number; label: string; lines: string }[]>([]);
+  const [addresses, setAddresses] = useState<{ id: number; label: string; lines: string; address_id: string }[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [openDropdown, setOpenDropdown] = useState(false);
-
-  const generateMockAddresses = (pc: string) => {
-    const streets = [
-      'High St',
-      'Church Rd',
-      'New Cathedral St',
-      'King St',
-      'Queensway',
-      'Station Rd',
-      'Market St',
-      'Victoria Rd',
-      'Oxford St',
-    ];
-    const town = 'Manchester';
-    const county = 'Lancs';
-    return streets.slice(0, 9).map((street, idx) => {
-      const num = idx + 1;
-      const lines = `${num} ${street}\n${town}\n${county}\n${pc.toUpperCase()}`;
-      return {
-        id: idx,
-        label: `${num}, ${street}, ${town}, ${county}, ${pc.toUpperCase()}`,
-        lines,
-      };
-    });
-  };
 
   const validPostcode = (pc: string) => /^[A-Za-z][0-9]{2}[A-Za-z]{2}$/i.test(pc.trim());
 
@@ -59,13 +35,41 @@ const AddressSearch: React.FC = () => {
       alert('Please enter a valid UK postcode in the format X11XX');
       return;
     }
-    setAddresses(generateMockAddresses(pc));
-    setSelectedId(null);
+
+    const getAddresses = async () => {
+      const rawResults = await fetchAddressesByPostcode(pc);
+      const formatted = rawResults.map((item, idx) => {
+        const parts = [
+          item.address1,
+          item.address2,
+          item.address3,
+          item.address4,
+          item.address5,
+          item.city,
+          item.region,
+          item.postcode,
+        ].filter(Boolean);
+
+        return {
+          id: idx,
+          label: parts.join(', '),
+          lines: parts.join('\n'),
+          address_id: item.address_id,
+        };
+      });
+
+      setAddresses(formatted);
+      setSelectedId(null);
+    };
+
+    getAddresses();
   };
 
   const handleNext = () => {
-    // Proceed only if an address is selected
     if (selectedId === null) return;
+
+    const selected = addresses.find((a) => a.id === selectedId);
+    console.log('Selected Address ID:', selected?.address_id);
     navigate('/auth/contactdetails');
   };
 

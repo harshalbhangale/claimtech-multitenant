@@ -2,7 +2,7 @@ import { VStack, Heading, Text, Button, Image, SimpleGrid, Box, Icon, HStack, In
 import { IdentificationIcon, InformationCircleIcon, LockClosedIcon,  ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { useState, useRef } from 'react';
 
-import { Header } from '@/components/Dashboard/MainPage/Header';
+import { Header } from '@/components/Dashboard/Main/Header';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 const DocumentUpload = () => {

@@ -5,7 +5,7 @@ export const ProgressBar = ({ currentStep, totalSteps }: { currentStep: number; 
     const { config } = useTenant();
     
     return (
-        <Box w="full" maxW="3xl" mx="auto">
+        <Box w="full" maxW="2xl" mx="auto">
             <HStack spacing={{ base: 2, md: 4 }} align="flex-start" w="full">
                 {Array.from({ length: totalSteps }, (_, index) => {
                     const stepNumber = index + 1;

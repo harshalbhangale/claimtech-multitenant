@@ -162,7 +162,7 @@ const LenderSelection: React.FC = () => {
                         h="24px"
                         borderRadius="full"
                         border="2px"
-                        borderColor={isSelected ? config.accentColor : '#E9ECF0'}
+                        borderColor={isSelected ? config.accentColor : 'gray.300'}
                         bg="white"
                         display="flex"
                         alignItems="center"

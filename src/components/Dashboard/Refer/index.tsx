@@ -2,7 +2,7 @@ import { Box, Text, Button, Image, Input, HStack, Icon, useClipboard } from '@ch
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Header } from '../MainPage/Header';
+import { Header } from '../Main/Header';
 import { useTenant } from '../../../contexts/TenantContext';
 const Refer = () => {
   const [referralLink] = useState('https://claim.resolvemyclaim.co.uk/claims_referral=12345');
