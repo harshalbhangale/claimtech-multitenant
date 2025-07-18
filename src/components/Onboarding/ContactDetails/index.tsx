@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -20,6 +20,8 @@ import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import NextButton from '../../Onboarding/Common/NextButton';
 import Trustpilot from '../Common/Trustpilot';
+import { saveContactDetails, getContactDetails } from '../../../utils/onboardingStorage';
+import { useAutoSave } from '../../../hooks/useAutoSave';
 
 const ContactDetails: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +29,27 @@ const ContactDetails: React.FC = () => {
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState({ mobile: false, email: false });
+
+  // Load saved contact details on component mount
+  useEffect(() => {
+    const savedContactDetails = getContactDetails();
+    if (savedContactDetails) {
+      setMobile(savedContactDetails.mobile);
+      setEmail(savedContactDetails.email);
+    }
+  }, []);
+
+  // Auto-save contact details as user types (with validation)
+  useAutoSave(
+    { mobile: mobile.trim(), email: email.trim() },
+    (data) => {
+      // Only save if both fields have some content
+      if (data.mobile && data.email) {
+        saveContactDetails(data);
+      }
+    },
+    2000 // Save after 2 seconds of inactivity
+  );
 
   // Validation functions
   const validateMobile = (value: string) => {
@@ -54,6 +77,12 @@ const ContactDetails: React.FC = () => {
     
     // Only proceed if there are no validation errors
     if (!validateMobile(mobile) && !validateEmail(email)) {
+      // Save contact details to localStorage
+      saveContactDetails({
+        mobile: mobile.trim(),
+        email: email.trim()
+      });
+      
       navigate('/auth/signature');
     }
   };

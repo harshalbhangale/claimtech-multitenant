@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   VStack,
@@ -19,12 +19,21 @@ import { ProgressBar } from '../Common/ProgressBar';
 import { ClaimUpTo } from '../Common/Claimupto';
 import Trustpilot from '../../Onboarding/Common/Trustpilot';
 import NextButton from '../../Onboarding/Common/NextButton';
+import { saveLenderSelection, getLenderSelection } from '../../../utils/onboardingStorage';
 
 const LenderSelection: React.FC = () => {
   const [selectedLenders, setSelectedLenders] = useState<string[]>([]);
   const [showMoreLenders, setShowMoreLenders] = useState(false);
   const navigate = useNavigate();
   const { config } = useTenant();
+
+  // Load saved lender selection on component mount
+  useEffect(() => {
+    const savedLenderSelection = getLenderSelection();
+    if (savedLenderSelection) {
+      setSelectedLenders(savedLenderSelection.selectedLenders);
+    }
+  }, []);
   
   const mainLenders = [
     'Barclays Finance',
@@ -62,10 +71,20 @@ const LenderSelection: React.FC = () => {
   // };
 
   const handleNextStep = () => {
+    // Save selected lenders to localStorage
+    saveLenderSelection({
+      selectedLenders
+    });
+    
     navigate('/auth/userdetails');
   };
   
   const handleSkip = () => {
+    // Save empty selection when skipping
+    saveLenderSelection({
+      selectedLenders: []
+    });
+    
     navigate('/auth/userdetails');
   };
   

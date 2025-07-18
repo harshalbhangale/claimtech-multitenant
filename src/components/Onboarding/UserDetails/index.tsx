@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   VStack,
@@ -17,6 +17,8 @@ import { ProgressBar } from '../Common/ProgressBar';
 import { useTenant } from '../../../contexts/TenantContext';
 import NextButton from '../../Onboarding/Common/NextButton';
 import Trustpilot from '../Common/Trustpilot';
+import { saveUserDetails, getUserDetails } from '../../../utils/onboardingStorage';
+import { useAutoSave } from '../../../hooks/useAutoSave';
 
 export const UserDetailsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +27,40 @@ export const UserDetailsPage: React.FC = () => {
   const [lastName, setLastName] = useState('');
   const [dob, setDob] = useState({ day: '', month: '', year: '' });
 
+  // Load saved user details on component mount
+  useEffect(() => {
+    const savedUserDetails = getUserDetails();
+    if (savedUserDetails) {
+      setFirstName(savedUserDetails.firstName);
+      setLastName(savedUserDetails.lastName);
+      setDob(savedUserDetails.dob);
+    }
+  }, []);
+
+  // Auto-save user details as user types
+  useAutoSave(
+    {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      dob
+    },
+    (data) => {
+      // Only save if at least name fields have content
+      if (data.firstName || data.lastName) {
+        saveUserDetails(data);
+      }
+    },
+    2000 // Save after 2 seconds of inactivity
+  );
+
   const handleNextStep = () => {
+    // Save user details to localStorage
+    saveUserDetails({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      dob
+    });
+    
     navigate('/auth/addresssearch');
   };
 

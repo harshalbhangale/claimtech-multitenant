@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -17,15 +17,36 @@ import { ProgressBar } from '../Common/ProgressBar';
 import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import Trustpilot from '../../Onboarding/Common/Trustpilot';
-import { fetchAddressesByPostcode } from '../../../api/AddressSearch';
+import { fetchAddressesByPostcode } from '../../../api/services/addressCheck';
+import { saveSelectedAddress, getSelectedAddress } from '../../../utils/addressStorage';
+import type { RawAddress, FormattedAddress } from '../../../types/address';
 
 const AddressSearch: React.FC = () => {
   const navigate = useNavigate();
   const { config } = useTenant();
   const [postcode, setPostcode] = useState('');
-  const [addresses, setAddresses] = useState<{ id: number; label: string; lines: string; address_id: string }[]>([]);
+  const [addresses, setAddresses] = useState<FormattedAddress[]>([]);
+  const [rawAddresses, setRawAddresses] = useState<RawAddress[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [openDropdown, setOpenDropdown] = useState(false);
+
+  // Load previously selected address on component mount
+  useEffect(() => {
+    const savedAddress = getSelectedAddress();
+    if (savedAddress) {
+      // Pre-fill with saved data
+      setPostcode(extractPostcodeFromAddress(savedAddress.address.label));
+      setAddresses([savedAddress.address]);
+      setRawAddresses([savedAddress.raw]);
+      setSelectedId(savedAddress.address.id);
+    }
+  }, []);
+
+  const extractPostcodeFromAddress = (addressLabel: string): string => {
+    // Extract postcode from address label (last part after last comma)
+    const parts = addressLabel.split(', ');
+    return parts[parts.length - 1] || '';
+  };
 
   const validPostcode = (pc: string) => /^[A-Za-z][0-9]{2}[A-Za-z]{2}$/i.test(pc.trim());
 
@@ -59,6 +80,7 @@ const AddressSearch: React.FC = () => {
       });
 
       setAddresses(formatted);
+      setRawAddresses(rawResults);
       setSelectedId(null);
     };
 
@@ -68,8 +90,15 @@ const AddressSearch: React.FC = () => {
   const handleNext = () => {
     if (selectedId === null) return;
 
-    const selected = addresses.find((a) => a.id === selectedId);
-    console.log('Selected Address ID:', selected?.address_id);
+    const selectedAddress = addresses.find((a) => a.id === selectedId);
+    const selectedRaw = rawAddresses.find((_, idx) => idx === selectedId);
+    
+    if (selectedAddress && selectedRaw) {
+      // Save selected address to localStorage
+      saveSelectedAddress(selectedAddress, selectedRaw);
+      console.log('Selected Address saved:', selectedAddress);
+    }
+    
     navigate('/auth/contactdetails');
   };
 
