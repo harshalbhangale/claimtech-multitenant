@@ -9,12 +9,6 @@ import {
   Image,
   Button as ChakraButton,
   useToast,
-  Alert,
-  AlertIcon,
-  Spinner,
-  Icon,
-  Checkbox,
-  Tooltip,
 } from '@chakra-ui/react';
 // @ts-ignore - library lacks type definitions
 import SignatureCanvas from 'react-signature-canvas';
@@ -25,7 +19,6 @@ import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import Button from '../Common/Button';
 import { saveSignature, getSavedSignature, clearSignature } from '../../../utils/signatureStorage';
-import { RotateCcw, Download, Check } from 'lucide-react';
 
 const SignatureStep: React.FC = () => {
   const sigCanvasRef = useRef<any>(null);
@@ -193,14 +186,14 @@ const SignatureStep: React.FC = () => {
         <VStack spacing={{ base: 4, md: 6 }} align="stretch">
           {/* Main Card */}
           <Box border="1.5px solid #E2E8F0" borderRadius="2xl" p={6} w="full">
-            <Text fontSize={{ base: 'xl', md: '3xl' }} fontWeight="bold" mb={2} color="gray.900">
-              Great news!
+            <Text fontSize={{ base: 'xl', md: '3xl' }} fontWeight="bold" mb={2} color="gray.900" fontFamily="Poppins">
+              Great news, Harshal !
             </Text>
             <Flex align="center" mb={4} flexWrap="wrap" gap={1}>
-              <Text fontSize={{ base: 'sm', md: 'md' }} color="gray.900" fontWeight="black">
+              <Text fontSize={{ base: 'sm', md: 'md' }} color="gray.900" fontWeight="bold" fontFamily="Poppins">
                 Final step to potentially claiming up to
               </Text>
-              <Text as="span" color={config.completedColor} fontWeight="bold">
+              <Text as="span" color="#50C878" fontWeight="bold" fontFamily="Poppins">
                 £6,427*
               </Text>
               <Text fontSize="lg" ml={1}>
@@ -208,161 +201,93 @@ const SignatureStep: React.FC = () => {
               </Text>
             </Flex>
 
-            <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.700" mb={6}>
+            <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.700" mb={6} fontFamily="Poppins">
               Please read the documents below before signing. They allow us to transfer your claim
               to our third party so they can make a claim on your behalf; this is No-Win-No-Fee, so
               you will only be charged if compensation is recovered.
             </Text>
 
             {/* Enhanced Signature Canvas */}
-            <Box mb={6}>
-              <Text fontSize="md" fontWeight="semibold" mb={3} color="gray.800">
+            <Box mb={6} position="relative">
+              <Text fontSize="md" fontWeight="semibold" mb={3} color="gray.800" fontFamily="Poppins">
                 Digital Signature
               </Text>
               
-              <Box 
-                position="relative" 
-                border={hasSignature ? "2px solid" : "2px dashed"}
-                borderColor={hasSignature ? "green.400" : "#E2E8F0"}
-                borderRadius="xl"
-                bg={hasSignature ? "green.50" : "gray.50"}
-                overflow="hidden"
-                transition="all 0.2s ease"
-                _hover={{
-                  borderColor: hasSignature ? "green.500" : "gray.300",
-                  bg: hasSignature ? "green.100" : "gray.100"
-                }}
-              >
-                <SignatureCanvas
-                  ref={sigCanvasRef}
-                  penColor="black"
-                  dotSize={2}
-                  minWidth={1.5}
-                  maxWidth={4}
-                  throttle={16}
-                  velocityFilterWeight={0.7}
-                  onEnd={handleSignatureChange}
-                  canvasProps={{
-                    width: 800,
-                    height: 200,
-                    style: { 
-                      width: '100%', 
-                      height: '200px',
-                      borderRadius: '12px',
-                      cursor: 'crosshair',
-                      touchAction: 'none',
-                      userSelect: 'none',
-                      WebkitUserSelect: 'none',
-                      MozUserSelect: 'none'
-                    },
-                  }}
-                />
-                
-                {/* Signature Controls */}
-                <HStack 
-                  position="absolute" 
-                  top={3} 
-                  right={3} 
-                  spacing={1}
-                  bg="white"
-                  borderRadius="lg"
-                  p={1}
-                  shadow="sm"
-                  border="1px solid"
-                  borderColor="gray.200"
-                  display={{ base: hasSignature ? "flex" : "none", md: "flex" }}
-                >
-                  <Tooltip label="Clear signature" placement="top">
-                    <ChakraButton
-                      size={{ base: "xs", md: "sm" }}
-                      variant="ghost"
-                      colorScheme="red"
-                      onClick={handleClear}
-                      isDisabled={!hasSignature}
-                      leftIcon={<Icon as={RotateCcw} boxSize={3} />}
-                    >
-                      <Text display={{ base: "none", md: "block" }}>Clear</Text>
-                    </ChakraButton>
-                  </Tooltip>
-                  
-                  {hasSignature && (
-                    <Tooltip label="Download signature" placement="top">
-                      <ChakraButton
-                        size={{ base: "xs", md: "sm" }}
-                        variant="ghost"
-                        colorScheme="blue"
-                        onClick={() => {
-                          if (sigCanvasRef.current) {
-                            const dataUrl = sigCanvasRef.current.getTrimmedCanvas().toDataURL('image/png');
-                            const link = document.createElement('a');
-                            link.download = 'signature.png';
-                            link.href = dataUrl;
-                            link.click();
-                            
-                            toast({
-                              title: "Signature downloaded",
-                              status: "success",
-                              duration: 2000,
-                              isClosable: true,
-                            });
-                          }
-                        }}
-                        leftIcon={<Icon as={Download} boxSize={3} />}
-                      >
-                        <Text display={{ base: "none", md: "block" }}>Save</Text>
-                      </ChakraButton>
-                    </Tooltip>
-                  )}
-                </HStack>
+<Box 
+  position="relative" 
+  border="1px solid #E2E8F0"
+  borderRadius="lg"
+  bg="#F8F9FA"
+  overflow="hidden"
+>
+  <SignatureCanvas
+    ref={sigCanvasRef}
+    penColor="black"
+    dotSize={1}
+    minWidth={2}
+    maxWidth={2}
+    throttle={8}
+    velocityFilterWeight={0}
+    onEnd={handleSignatureChange}
+    canvasProps={{
+      width: 800,
+      height: 200,
+      style: { 
+        width: '100%', 
+        height: '200px',
+        borderRadius: '8px',
+        cursor: 'default',
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none'
+      },
+    }}
+  />
 
-                {/* Dynamic Placeholder */}
-                {!hasSignature && (
-                  <Flex
-                    position="absolute"
-                    top="50%"
-                    left="50%"
-                    transform="translate(-50%, -50%)"
-                    pointerEvents="none"
-                    direction="column"
-                    align="center"
-                    color="gray.400"
-                  >
-                    <Text fontSize="xl" fontWeight="semibold" mb={1}>
-                      ✍️ Sign Here
-                    </Text>
-                    <Text fontSize="sm" opacity={0.8}>
-                      Use your mouse or finger to sign
-                    </Text>
-                  </Flex>
-                )}
+  {!hasSignature && (
+    <Flex
+      position="absolute"
+      top="50%"
+      left="50%"
+      transform="translate(-50%, -50%)"
+      pointerEvents="none"
+      direction="column"
+      align="center"
+      color="gray.400"
+    >
+      <Text fontSize="2xl" fontWeight="normal" color="gray.300" fontStyle="italic" fontFamily="Poppins">
+        Sign Here
+      </Text>
+    </Flex>
+  )}
 
-                {/* Signature Success Indicator */}
-                {hasSignature && (
-                  <Flex
-                    position="absolute"
-                    bottom={3}
-                    left={3}
-                    align="center"
-                    bg="green.100"
-                    borderRadius="full"
-                    px={3}
-                    py={1}
-                    border="1px solid"
-                    borderColor="green.300"
-                  >
-                    <Icon as={Check} boxSize={4} color="green.600" mr={2} />
-                    <Text fontSize="sm" color="green.700" fontWeight="medium">
-                      Signature captured
-                    </Text>
-                  </Flex>
-                )}
-              </Box>
+  {/* ✅ Fixed Reset Button */}
+  <Box position="absolute" top={2} right={2} zIndex={1}>
+    <ChakraButton
+      size="sm"
+      variant="ghost"
+      color={config.accentColor}
+      onClick={handleClear}
+      fontWeight="bold"
+      fontSize="sm"
+      fontFamily="Poppins"
+      _hover={{ bg: 'transparent', textDecoration: 'underline' }}
+      isDisabled={!hasSignature}
+      opacity={hasSignature ? 1 : 0.5}
+    >
+      Reset
+    </ChakraButton>
+  </Box>
+</Box>
+
             </Box>
 
             {/* Submit Button */}
             <Button
               onClick={handleSubmit}
               fontWeight="bold"
+              mb={6}
             >
               Find my agreements
             </Button>
@@ -371,8 +296,8 @@ const SignatureStep: React.FC = () => {
             <Image src="/icons/trustpilot.svg" alt="Trustpilot Rating" h="32px" objectFit="contain" mx="auto" mb={6} />
 
             {/* Disclaimer Text */}
-            <Text fontSize="xs" fontWeight="medium" color="gray.600">
-              By signing above and clicking ‘Find my agreements’, you agree that we will run a soft
+            <Text fontSize="xs" fontWeight="medium" color="gray.600" fontFamily="Poppins">
+              By signing above and clicking 'Find my agreements', you agree that we will run a soft
               credit check (powered by Checkboard IP Ltd) to identify any potential car finance
               claims. These searches will not impact your credit score but will verify any
               agreements that are found. You are signing all documents related to your claim.
@@ -384,16 +309,19 @@ const SignatureStep: React.FC = () => {
               the introduction. You understand that this fee is not deducted from your compensation
               and that if you would like to know the exact fee that you are free to ask.
             </Text>
-        </Box>
-            {/* View Files Section */}
-            <Text fontWeight="bold" color="gray.900">
+          </Box>
+
+          {/* View Files Section */}
+          <Box>
+            <Text fontWeight="bold" color="gray.900" fontFamily="Poppins" mb={2}>
               View Files
             </Text>
-            <Text fontSize="sm" color="gray.700">
-              By proceeding you confirm that you agree to both Resolve My Claim’s letter of
-              authority, allowing them to investigate your claims, and Prowse Phillips Law’s letter
+            <Text fontSize="sm" color="gray.700" fontFamily="Poppins" mb={4}>
+              By proceeding you confirm that you agree to both Resolve My Claim's letter of
+              authority, allowing them to investigate your claims, and Prowse Phillips Law's letter
               of authority and terms of business, allowing them to submit any car finance claims.
             </Text>
+            
             {/* Files List */}
             <VStack spacing={3} align="stretch" mb={6}>
               <HStack
@@ -427,7 +355,7 @@ const SignatureStep: React.FC = () => {
                 </Text>
               </HStack>
             </VStack>
-
+          </Box>
 
           {/* Secure Bar */}
           <Box w="full" maxW={{ base: 'full', md: '2xl' }}>
