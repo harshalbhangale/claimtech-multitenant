@@ -3,7 +3,7 @@ import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://preprod.theclaimpeople.com',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -37,7 +37,7 @@ api.interceptors.response.use(
     // If error is 401 and hasn't been retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
+
       try {
         // Try to refresh the token
         const refreshToken = localStorage.getItem('refresh_token');
@@ -74,7 +74,7 @@ api.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
-    
+    // If not a 401 error or already retried, just reject the error
     return Promise.reject(error);
   }
 );

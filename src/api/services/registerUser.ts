@@ -32,6 +32,9 @@ export const registerUser = async (userData: RegisterUserData): Promise<Register
     localStorage.setItem('user_id', user_id);
     
     console.log('User registered successfully:', { user_id });
+    console.log('Access Token:', access);
+    console.log('Refresh Token:', refresh);
+
     
     return response.data;
   } catch (error) {

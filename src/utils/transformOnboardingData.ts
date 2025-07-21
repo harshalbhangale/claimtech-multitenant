@@ -1,11 +1,10 @@
 // src/utils/transformOnboardingData.ts
 import type { RegisterUserData } from '../api/services/registerUser';
-import type { RawAddress } from '../types/address';
 import { 
   getContactDetails, 
-  getUserDetails, 
-  getSelectedAddress 
+  getUserDetails
 } from './onboardingStorage';
+import { getSelectedAddress } from './addressStorage';
 
 export const transformOnboardingDataForRegistration = (): RegisterUserData | null => {
   try {
@@ -13,6 +12,10 @@ export const transformOnboardingDataForRegistration = (): RegisterUserData | nul
     const contactDetails = getContactDetails();
     const userDetails = getUserDetails();
     const selectedAddress = getSelectedAddress();
+
+    console.log('Contact Details:', contactDetails);
+    console.log('User Details:', userDetails);
+    console.log('Selected Address:', selectedAddress);
 
     if (!contactDetails || !userDetails || !selectedAddress) {
       console.error('Missing required onboarding data');
