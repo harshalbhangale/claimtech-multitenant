@@ -33,6 +33,7 @@ export const getTenantConfig = (subdomain: string) => {
       accentLightColor: '#EFEBFB',
       completedColor: '#50C878',
       inactiveColor: '#D9D9D9',
+      primaryLightColor: '#E9FFE9',
       logo: '/icons/resolve.png',
       secured: '/icons/secured.png',
       theme: 'default'
@@ -42,8 +43,9 @@ export const getTenantConfig = (subdomain: string) => {
       primaryColor: '#3695F7',
       accentColor: '#0056b3',
       accentLightColor: '#E8F0FF',
-      completedColor: '#50C878',
+      completedColor: '#3695F7',
       inactiveColor: '#D9D9D9',
+      primaryLightColor: '#3695F7',
       logo: '/icons/blueclaim.png',
       secured: '/icons/secured.png',
       theme: 'blueTheme'

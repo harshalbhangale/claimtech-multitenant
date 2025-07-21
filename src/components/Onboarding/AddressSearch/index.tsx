@@ -48,12 +48,17 @@ const AddressSearch: React.FC = () => {
     return parts[parts.length - 1] || '';
   };
 
-  const validPostcode = (pc: string) => /^[A-Za-z][0-9]{2}[A-Za-z]{2}$/i.test(pc.trim());
+  const validPostcode = (pc: string): boolean => {
+    // UK postcodes follow various formats, this regex covers most common formats
+    // For example: SW1A 1AA, M1 1AA, B33 8TH, CR2 6XH, DN55 1PT
+    const postcodeRegex = /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i;
+    return postcodeRegex.test(pc.replace(/\s/g, ''));
+  };
 
   const handleFind = () => {
     const pc = postcode.trim();
     if (!validPostcode(pc)) {
-      alert('Please enter a valid UK postcode in the format X11XX');
+      alert('Please enter a valid UK postcode ');
       return;
     }
 
@@ -197,8 +202,9 @@ const AddressSearch: React.FC = () => {
 
                 {selectedId !== null && (
                   <Box
-                    border="2px solid #38A169"
-                    bg="#E9FFE9"
+                    border="2px solid"
+                    borderColor={config.completedColor}
+                    bg={config.primaryLightColor}
                     borderRadius="md"
                     p={4}
                     mb={6}

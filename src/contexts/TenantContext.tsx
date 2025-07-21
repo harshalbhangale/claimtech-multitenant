@@ -8,6 +8,7 @@ interface TenantConfig {
   accentColor: string;
   accentLightColor?: string;
   completedColor?: string;
+  primaryLightColor?: string;
   logo: string;
   secured: string;
   theme: string;

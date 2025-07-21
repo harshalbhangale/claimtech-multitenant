@@ -17,7 +17,7 @@ import { ProgressBar } from '../Common/ProgressBar';
 import { useTenant } from '../../../contexts/TenantContext';
 import NextButton from '../../Onboarding/Common/NextButton';
 import Trustpilot from '../Common/Trustpilot';
-import { saveUserDetails, getUserDetails } from '../../../utils/onboardingStorage';
+import { saveUserDetails, getUserDetails, getLenderSelection } from '../../../utils/onboardingStorage';
 import { useAutoSave } from '../../../hooks/useAutoSave';
 
 export const UserDetailsPage: React.FC = () => {
@@ -26,14 +26,20 @@ export const UserDetailsPage: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [dob, setDob] = useState({ day: '', month: '', year: '' });
+  const [selectedLendersCount, setSelectedLendersCount] = useState(0);
 
-  // Load saved user details on component mount
+  // Load saved user details and lender selection on component mount
   useEffect(() => {
     const savedUserDetails = getUserDetails();
     if (savedUserDetails) {
       setFirstName(savedUserDetails.firstName);
       setLastName(savedUserDetails.lastName);
       setDob(savedUserDetails.dob);
+    }
+
+    const savedLenderSelection = getLenderSelection();
+    if (savedLenderSelection) {
+      setSelectedLendersCount(savedLenderSelection.selectedLenders.length);
     }
   }, []);
 
@@ -73,10 +79,10 @@ export const UserDetailsPage: React.FC = () => {
           {/* Progress Steps */}
           <ProgressBar currentStep={2} totalSteps={4} />
           {/* Purple Banner */}
-          <Box bg={config.accentColor} color="white" p={5} borderRadius="xl" mb={4}>
+          <Box bg={config.accentColor} color="white" p={4} borderRadius="xl" >
             <Flex justify="center" align="center" gap={4}>
               <Text fontSize={{ base: "xs", md: "sm" }} fontWeight="medium">
-                You have selected 1 agreement which could be worth a total refund value of
+                You have selected {selectedLendersCount} agreements which could be worth a total refund value of
               </Text>
               <Box position="relative" display="inline-block" minW="90px">
                 <Image
