@@ -42,3 +42,4 @@ export const registerUser = async (userData: RegisterUserData): Promise<Register
     throw error;
   }
 };
+

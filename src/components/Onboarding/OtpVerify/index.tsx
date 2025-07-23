@@ -20,7 +20,7 @@ import {
   getOtpReference, 
   clearOtpReference,
   storeOtpReference 
-} from '@/api/services/verifyOTP';
+} from '../../../api/services/verifyOTP';
 
 const OtpVerify: React.FC = () => {
   const { config } = useTenant();
@@ -30,6 +30,7 @@ const OtpVerify: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [otpReference, setOtpReference] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   // Load OTP reference from localStorage on component mount
@@ -38,12 +39,16 @@ const OtpVerify: React.FC = () => {
     if (reference) {
       setOtpReference(reference);
     } else {
-      // If no reference found, redirect back to signature step
-      console.warn('No OTP reference found, redirecting to signature step');
-      navigate('/auth/signature'); // Adjust path as needed
+      // ✅ Give user time to see the page before redirecting
+      setError('No OTP reference found. Redirecting to signature step...');
+      setTimeout(() => {
+        navigate('/auth/signature');
+      }, 3000); // 3 second delay
+      setIsLoading(false);
     }
   }, [navigate]);
 
+  // Fixed handleVerify function in OtpVerify component
   const handleVerify = async () => {
     if (!otpReference) {
       setError('No OTP reference found. Please restart the process.');
@@ -62,18 +67,26 @@ const OtpVerify: React.FC = () => {
     try {
       const response = await verifyOtp(otpReference, code.trim());
       
-      if (response.success) {
+      console.log('OTP Response:', response);
+      
+      // 🔥 FIX: Check if response exists (successful verification)
+      // The API returns the data directly when successful
+      if (response && (response.extracted_hp_agreements !== undefined || response.agreements_count !== undefined)) {
         setSuccess('Verification successful! Redirecting...');
+        
+        // Store the verification results if needed
+        console.log('Found agreements:', response.agreements_count);
+        console.log('HP Agreements:', response.extracted_hp_agreements);
         
         // Clear the OTP reference after successful verification
         clearOtpReference();
         
-        // Navigate to next step after a short delay
+        // Navigate to next step after verification
         setTimeout(() => {
-          navigate('/auth/missingagreements');
+          navigate('/auth/contactdetails');
         }, 1500);
       } else {
-        setError(response.message || 'Verification failed. Please try again.');
+        setError('Verification failed. Please try again.');
       }
     } catch (error: any) {
       console.error('OTP verification error:', error);
@@ -129,6 +142,7 @@ const OtpVerify: React.FC = () => {
     }
   };
 
+
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // Only allow numbers and limit to 6 digits
@@ -143,6 +157,9 @@ const OtpVerify: React.FC = () => {
       handleVerify();
     }
   };
+
+
+
   return (
     <Box minH="100vh" bg="white">
       <Header />
@@ -243,14 +260,6 @@ const OtpVerify: React.FC = () => {
                 {isResending ? 'Resending...' : 'Resend verification code'}
               </Button>
             </Box>
-
-            {/* Debug info - remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <Box mt={4} p={3} bg="gray.50" borderRadius="md" fontSize="xs">
-                <Text><strong>Debug:</strong> Reference - {otpReference ? 'Available' : 'Missing'}</Text>
-                <Text><strong>Code Length:</strong> {code.length}/6</Text>
-              </Box>
-            )}
           </Box>
 
           <SecureBar />

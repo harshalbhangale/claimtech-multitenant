@@ -17,6 +17,7 @@ import OtpVerify from './components/Onboarding/OtpVerify';
 import MissingAgreements from './components/Onboarding/MissingAgreements';
 import NotFound from './pages/NotFound';
 import ReferPage from './pages/Refer';
+import PreviousAddresses from './components/Onboarding/PreviousAddresses';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -36,7 +37,7 @@ const router = createBrowserRouter([
           { path: 'searching', element: <SearchingAgreements /> },
           { path: 'otpverify', element: <OtpVerify /> },
           { path: 'missingagreements', element: <MissingAgreements /> },
-
+          { path: 'previousaddresses', element: <PreviousAddresses /> },
         ],
       },
       {

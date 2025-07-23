@@ -7,10 +7,9 @@ export interface VerifyOtpData {
 }
 
 export interface VerifyOtpResponse {
-  message: string;
-  success: boolean;
-  data?: any;
-}
+    extracted_hp_agreements: any[]; // Array of HP agreements found
+    agreements_count: number; // Number of agreements found
+  }
 
 export interface ResendOtpData {
   reference: string;
@@ -34,7 +33,7 @@ export const verifyOtp = async (reference: string, code: string): Promise<Verify
       code
     };
 
-    const response = await api.post('/api/v1/onboarding/verify-otp/', requestData, {
+    const response = await api.post('/api/v1/onboarding/verify/', requestData, {
       headers: {
         'Content-Type': 'application/json',
       },
