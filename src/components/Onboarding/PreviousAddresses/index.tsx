@@ -560,6 +560,9 @@ export const PreviousAddressesPage: React.FC = () => {
   const [modalOpenDropdown, setModalOpenDropdown] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Utility: localStorage key
+  const LOCAL_STORAGE_KEY = 'previous_addresses';
+
   // Check if user is authenticated
   useEffect(() => {
     const accessToken = localStorage.getItem('access_token');
@@ -579,54 +582,50 @@ export const PreviousAddressesPage: React.FC = () => {
     }
   }, [navigate, toast]);
 
-  // Fetch addresses on component mount
+  // Load addresses from localStorage or API on mount
   useEffect(() => {
+    const local = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (local) {
+      try {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) {
+          setAddresses(parsed);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        // fallback to API fetch
+      }
+    }
+    // If not in localStorage, fetch from API
     const loadAddresses = async () => {
       try {
         setLoading(true);
         setAuthError(null);
         setAddressError(null);
-        
-        console.log('Fetching user addresses...');
         const fetchedAddresses = await fetchUserAddresses();
-        console.log('Fetched addresses:', fetchedAddresses);
-        console.log('Number of addresses:', fetchedAddresses.length);
-        
         setAddresses(fetchedAddresses);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(fetchedAddresses));
       } catch (error: any) {
-        console.error('Error loading addresses:', error);
-        
-        if (error.message?.includes('Session expired') || error.message?.includes('No access token')) {
-          setAuthError(error.message);
-          toast({
-            title: 'Session Expired',
-            description: 'Please login again to continue.',
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
-          setTimeout(() => {
-            navigate('/auth/contactdetails');
-          }, 3000);
-        } else {
-          setAddressError(error.message || 'Failed to load addresses');
-          toast({
-            title: 'Error Loading Addresses',
-            description: error.message || 'Failed to load addresses. You can still continue to the next step.',
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
-        }
+        setAddressError(error.message || 'Failed to load addresses');
+        toast({
+          title: 'Error Loading Addresses',
+          description: error.message || 'Failed to load addresses. You can still continue to the next step.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
       } finally {
         setLoading(false);
       }
     };
-
-    if (!authError) {
-      loadAddresses();
-    }
+    loadAddresses();
   }, [toast, navigate, authError]);
+
+  // Whenever addresses change, update localStorage
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(addresses));
+  }, [addresses]);
 
   // Format address for display
   const formatAddress = (address: BestMatchAddress): string => {
@@ -665,7 +664,11 @@ export const PreviousAddressesPage: React.FC = () => {
 
   // Remove address from list
   const removeAddress = (addressId: string) => {
-    setAddresses(prev => prev.filter(addr => addr.address_id !== addressId));
+    setAddresses(prev => {
+      const updated = prev.filter(addr => addr.address_id !== addressId);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
     toast({
       title: "Address Removed",
       description: "Address has been removed from your list.",
@@ -735,10 +738,8 @@ export const PreviousAddressesPage: React.FC = () => {
 
   const handleAddAddress = () => {
     if (modalSelectedId === null) return;
-
     const selectedAddress = modalAddresses.find((a) => a.id === modalSelectedId);
     const selectedRaw = modalRawAddresses.find((_, idx) => idx === modalSelectedId);
-    
     if (selectedAddress && selectedRaw) {
       // Convert to BestMatchAddress format
       const newAddress: BestMatchAddress = {
@@ -754,10 +755,8 @@ export const PreviousAddressesPage: React.FC = () => {
         postcode: selectedRaw.postcode || '',
         address_id: selectedRaw.address_id,
       };
-
       // Check if address already exists
       const addressExists = addresses.some(addr => addr.address_id === newAddress.address_id);
-      
       if (addressExists) {
         toast({
           title: "Address Already Added",
@@ -767,23 +766,20 @@ export const PreviousAddressesPage: React.FC = () => {
           isClosable: true,
         });
       } else {
-        setAddresses(prev => [...prev, newAddress]);
+        setAddresses(prev => {
+          const updated = [...prev, newAddress];
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+          return updated;
+        });
         toast({
           title: "Address Added",
-          description: "New address has been added to your list.",
+          description: "Address has been added to your list.",
           status: "success",
-          duration: 3000,
+          duration: 2000,
           isClosable: true,
         });
+        onClose();
       }
-
-      // Reset modal state
-      setModalPostcode('');
-      setModalAddresses([]);
-      setModalRawAddresses([]);
-      setModalSelectedId(null);
-      setModalOpenDropdown(false);
-      onClose();
     }
   };
 
