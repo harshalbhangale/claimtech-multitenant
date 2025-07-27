@@ -1,504 +1,3 @@
-// import React, { useState, useEffect } from 'react';
-// import {
-//   Container,
-//   VStack,
-//   Text,
-//   Box,
-//   Flex,
-//   Button,
-//   Icon,
-//   useToast,
-//   Spinner,
-//   Alert,
-//   AlertIcon,
-// } from '@chakra-ui/react';
-// import { Check, X } from 'lucide-react';
-// import { useNavigate } from 'react-router-dom';
-// import { Header } from '../Common/Header';
-// import { Footer } from '../Common/Footer';
-// import { SecureBar } from '../Common/Securebar';
-// import { useTenant } from '../../../contexts/TenantContext';
-// import NextButton from '../Common/NextButton';
-// import Trustpilot from '../Common/Trustpilot';
-// import { fetchUserAddresses } from '../../../api/services/addressMatch';
-// import type { BestMatchAddress } from '../../../api/services/addressMatch';
-// import { inviteUser } from '../../../api/services/inviteUser';
-// import { storeOtpReference } from '../../../api/services/verifyOTP';
-
-// export const PreviousAddressesPage: React.FC = () => {
-//   const navigate = useNavigate();
-//   const { config } = useTenant();
-//   const toast = useToast();
-//   const [addresses, setAddresses] = useState<BestMatchAddress[]>([]);
-//   const [selectedAddresses, setSelectedAddresses] = useState<string[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [isSubmitting, setIsSubmitting] = useState(false);
-//   const [authError, setAuthError] = useState<string | null>(null);
-//   const [addressError, setAddressError] = useState<string | null>(null);
-//   const [retryCount, setRetryCount] = useState(0);
-
-//   // Check if user is authenticated
-//   useEffect(() => {
-//     const accessToken = localStorage.getItem('access_token');
-//     if (!accessToken) {
-//       setAuthError('No access token found. Please login again.');
-//       toast({
-//         title: 'Authentication Required',
-//         description: 'Please login to continue.',
-//         status: 'error',
-//         duration: 5000,
-//         isClosable: true,
-//       });
-//       // Redirect to registration/login page
-//       setTimeout(() => {
-//         navigate('/auth/contactdetails');
-//       }, 3000);
-//       return;
-//     }
-//   }, [navigate, toast]);
-
-//   // Fetch addresses on component mount
-//   useEffect(() => {
-//     const loadAddresses = async () => {
-//       try {
-//         setLoading(true);
-//         setAuthError(null);
-//         setAddressError(null);
-        
-//         console.log('Fetching user addresses...');
-//         const fetchedAddresses = await fetchUserAddresses();
-//         console.log('Fetched addresses:', fetchedAddresses);
-//         console.log('Number of addresses:', fetchedAddresses.length);
-        
-//         setAddresses(fetchedAddresses);
-//       } catch (error: any) {
-//         console.error('Error loading addresses:', error);
-        
-//         if (error.message?.includes('Session expired') || error.message?.includes('No access token')) {
-//           setAuthError(error.message);
-//           toast({
-//             title: 'Session Expired',
-//             description: 'Please login again to continue.',
-//             status: 'error',
-//             duration: 5000,
-//             isClosable: true,
-//           });
-//           // Redirect to login/registration
-//           setTimeout(() => {
-//             navigate('/auth/contactdetails');
-//           }, 3000);
-//         } else if (error.message?.includes('timeout')) {
-//           setAddressError('The request timed out. You can still continue to the next step.');
-//           toast({
-//             title: 'Address Loading Timeout',
-//             description: 'Unable to load addresses due to slow connection. You can continue without reviewing addresses.',
-//             status: 'warning',
-//             duration: 7000,
-//             isClosable: true,
-//           });
-//         } else {
-//           setAddressError(error.message || 'Failed to load addresses');
-//           toast({
-//             title: 'Error Loading Addresses',
-//             description: error.message || 'Failed to load addresses. You can still continue to the next step.',
-//             status: 'error',
-//             duration: 5000,
-//             isClosable: true,
-//           });
-//         }
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     // Only load addresses if we don't have an auth error
-//     if (!authError) {
-//       loadAddresses();
-//     }
-//   }, [toast, navigate, authError]);
-
-//   // Retry function for address loading
-//   const retryLoadAddresses = async () => {
-//     setRetryCount(prev => prev + 1);
-//     setAddressError(null);
-//     setLoading(true);
-    
-//     try {
-//       console.log(`Retrying address fetch (attempt ${retryCount + 1})...`);
-//       const fetchedAddresses = await fetchUserAddresses();
-//       console.log('Retry successful - fetched addresses:', fetchedAddresses);
-//       setAddresses(fetchedAddresses);
-//       setAddressError(null);
-//     } catch (error: any) {
-//       console.error('Retry failed:', error);
-//       setAddressError(error.message || 'Failed to load addresses');
-      
-//       toast({
-//         title: 'Retry Failed',
-//         description: 'Still unable to load addresses. You can continue without reviewing them.',
-//         status: 'error',
-//         duration: 5000,
-//         isClosable: true,
-//       });
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   // Toggle address selection
-//   const toggleAddressSelection = (addressId: string) => {
-//     setSelectedAddresses(prev =>
-//       prev.includes(addressId)
-//         ? prev.filter(id => id !== addressId)
-//         : [...prev, addressId]
-//     );
-//   };
-
-//   // Remove address from list
-//   const removeAddress = (addressId: string) => {
-//     setAddresses(prev => prev.filter(addr => addr.address_id !== addressId));
-//     setSelectedAddresses(prev => prev.filter(id => id !== addressId));
-//   };
-
-//   // Format address for display
-//   const formatAddress = (address: BestMatchAddress): string => {
-//     // Create an array of address parts in order
-//     const addressParts = [];
-    
-//     // Add main address if it exists and is not empty
-//     if (address.address && address.address.trim() && address.address !== '""') {
-//       addressParts.push(address.address);
-//     }
-    
-//     // Add numbered address parts (address1-address5) if they exist
-//     const numberedParts = [
-//       address.address1,
-//       address.address2, 
-//       address.address3,
-//       address.address4,
-//       address.address5
-//     ].filter(part => part && part.trim() && part !== '""');
-    
-//     addressParts.push(...numberedParts);
-    
-//     // Add city if it exists
-//     if (address.city && address.city.trim() && address.city !== '""') {
-//       addressParts.push(address.city);
-//     }
-    
-//     // Add region if it exists
-//     if (address.region && address.region.trim() && address.region !== '""') {
-//       addressParts.push(address.region);
-//     }
-    
-//     // Add postcode if it exists
-//     if (address.postcode && address.postcode.trim() && address.postcode !== '""') {
-//       addressParts.push(address.postcode);
-//     }
-    
-//     // Return formatted address or fallback
-//     return addressParts.length > 0 
-//       ? addressParts.join(', ') 
-//       : `Address ID: ${address.address_id}`;
-//   };
-
-//   const handleNextStep = async () => {
-//     setIsSubmitting(true);
-    
-//     try {
-//       // Save selected addresses to localStorage if needed
-//       if (selectedAddresses.length > 0) {
-//         localStorage.setItem('selected_addresses', JSON.stringify(selectedAddresses));
-//         console.log('Selected addresses saved:', selectedAddresses);
-//       }
-      
-//       // Call invite API to send OTP
-//       console.log('Calling invite API...');
-//       const inviteResponse = await inviteUser();
-//       console.log('Invite response:', inviteResponse);
-
-//       // Store OTP reference for verification
-//       if (inviteResponse.invite_response?.Info?.Data?.reference) {
-//         const reference = inviteResponse.invite_response.Info.Data.reference;
-//         storeOtpReference(reference);
-//         console.log('OTP reference stored:', reference);
-        
-//         toast({
-//           title: "Processing Complete",
-//           description: "Please check your phone for the verification code.",
-//           status: "success",
-//           duration: 3000,
-//           isClosable: true,
-//         });
-
-//         // Navigate to OTP verification page
-//         navigate('/auth/otpverify');
-//       } else {
-//         console.error('No OTP reference found in invite response:', inviteResponse);
-//         throw new Error('No OTP reference received from invite request');
-//       }
-      
-//     } catch (error: any) {
-//       console.error('Error sending invite:', error);
-      
-//       let errorMessage = 'Failed to proceed. Please try again.';
-      
-//       if (error.message?.includes('Session expired') || error.message?.includes('No access token')) {
-//         errorMessage = 'Session expired. Please login again.';
-//         // Redirect to login
-//         setTimeout(() => {
-//           navigate('/auth/contactdetails');
-//         }, 2000);
-//       } else if (error.response?.data?.message) {
-//         errorMessage = error.response.data.message;
-//       } else if (error.response?.data?.error) {
-//         errorMessage = error.response.data.error;
-//       } else if (error.message) {
-//         errorMessage = error.message;
-//       }
-      
-//       toast({
-//         title: "Error",
-//         description: errorMessage,
-//         status: "error",
-//         duration: 5000,
-//         isClosable: true,
-//       });
-//     } finally {
-//       setIsSubmitting(false);
-//     }
-//   };
-
-//   // Show authentication error if exists
-//   if (authError) {
-//     return (
-//       <Box minH="100vh" bg="white" w="100%">
-//         <Header />
-//         <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 4, sm: 6, lg: 8 }}>
-//           <VStack spacing={{ base: 4, md: 6 }} align="stretch">
-//             <Alert status="error" borderRadius="lg">
-//               <AlertIcon />
-//               <Box>
-//                 <Text fontWeight="bold">Authentication Required</Text>
-//                 <Text fontSize="sm">{authError}</Text>
-//               </Box>
-//             </Alert>
-//           </VStack>
-//         </Container>
-//       </Box>
-//     );
-//   }
-
-//   // Debug log
-//   console.log('Component render - addresses state:', addresses);
-//   console.log('Component render - loading state:', loading);
-//   console.log('Component render - authError state:', authError);
-
-//   return (
-//     <Box minH="100vh" bg="white" w="100%">
-//       <Header />
-
-//       <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 4, sm: 6, lg: 8 }}>
-//         <VStack spacing={{ base: 4, md: 6 }} align="stretch">
-//           {/* Form Section */}
-//           <Box border="2px solid #E2E8F0" borderRadius="2xl" p={6} w="full">
-//             <Text
-//               fontSize={{ base: "xl", md: "2xl" }}
-//               fontWeight="bold"
-//               mb={3}
-//               color="gray.900"
-//             >
-//               Review your previous addresses
-//             </Text>
-//             <Text color="gray.600" mb={6} fontSize={{ base: "sm", md: "md" }}>
-//               We found these addresses associated with your details. Please select the ones that match your previous addresses or remove any that don't belong to you.
-//             </Text>
-
-//             {loading ? (
-//               <Flex justify="center" align="center" py={8}>
-//                 <Spinner size="lg" color={config.accentColor} />
-//                 <Text ml={4} color="gray.600">Loading your addresses...</Text>
-//               </Flex>
-//             ) : addressError ? (
-//               <Box
-//                 textAlign="center"
-//                 py={8}
-//                 px={4}
-//                 bg="orange.50"
-//                 borderRadius="lg"
-//                 border="1px solid"
-//                 borderColor="orange.200"
-//               >
-//                 <Text color="orange.800" fontSize="md" fontWeight="bold" mb={2}>
-//                   Unable to Load Addresses
-//                 </Text>
-//                 <Text color="orange.700" fontSize="sm" mb={4}>
-//                   {addressError}
-//                 </Text>
-//                 <VStack spacing={3}>
-//                   <Button
-//                     size="sm"
-//                     colorScheme="orange"
-//                     onClick={retryLoadAddresses}
-//                     isLoading={loading}
-//                     loadingText="Retrying..."
-//                   >
-//                     Try Again
-//                   </Button>
-//                   <Text color="gray.600" fontSize="xs">
-//                     You can continue without reviewing addresses by clicking "Next step" below
-//                   </Text>
-//                 </VStack>
-//               </Box>
-//             ) : addresses.length === 0 ? (
-//               <Box
-//                 textAlign="center"
-//                 py={8}
-//                 px={4}
-//                 bg="gray.50"
-//                 borderRadius="lg"
-//                 border="1px solid"
-//                 borderColor="gray.200"
-//               >
-//                 <Text color="gray.600" fontSize="md" mb={4}>
-//                   No additional addresses found for your account.
-//                 </Text>
-//                 <Text color="gray.500" fontSize="sm">
-//                   You can continue to the next step to proceed with OTP verification.
-//                 </Text>
-//                 <Text color="gray.400" fontSize="xs" mt={2}>
-//                   Debug: Found {addresses.length} addresses
-//                 </Text>
-//               </Box>
-//             ) : (
-//               <VStack spacing={3} align="stretch" mb={6}>
-//                 {addresses.map((address) => {
-//                   const isSelected = selectedAddresses.includes(address.address_id);
-//                   const formattedAddress = formatAddress(address);
-                  
-//                   return (
-//                     <Box
-//                       key={address.address_id}
-//                       p={4}
-//                       borderRadius="lg"
-//                       border="2px"
-//                       borderColor={isSelected ? config.accentColor : 'gray.200'}
-//                       bg={isSelected ? '#F3F0FF' : 'white'}
-//                       transition="all 0.2s"
-//                       _hover={{
-//                         borderColor: isSelected ? config.accentColor : 'gray.300',
-//                         bg: isSelected ? '#F3F0FF' : 'gray.50'
-//                       }}
-//                     >
-//                       <Flex justify="space-between" align="flex-start" gap={4}>
-//                         <Flex flex="1" align="flex-start" gap={3}>
-//                           {/* Selection Checkbox */}
-//                           <Box
-//                             w="24px"
-//                             h="24px"
-//                             borderRadius="full"
-//                             border="2px"
-//                             borderColor={isSelected ? config.accentColor : 'gray.300'}
-//                             bg="white"
-//                             display="flex"
-//                             alignItems="center"
-//                             justifyContent="center"
-//                             cursor="pointer"
-//                             onClick={() => toggleAddressSelection(address.address_id)}
-//                             flexShrink={0}
-//                             mt={1}
-//                           >
-//                             <Icon 
-//                               as={Check} 
-//                               w={3} 
-//                               h={3} 
-//                               color={isSelected ? config.accentColor : 'transparent'}
-//                               strokeWidth={3}
-//                             />
-//                           </Box>
-
-//                           {/* Address Details */}
-//                           <Box flex="1" cursor="pointer" onClick={() => toggleAddressSelection(address.address_id)}>
-//                             <Text
-//                               fontSize="md"
-//                               fontWeight={isSelected ? "bold" : "medium"}
-//                               color="gray.900"
-//                               lineHeight="1.4"
-//                             >
-//                               {formattedAddress}
-//                             </Text>
-//                             <Text fontSize="sm" color="gray.500" mt={1}>
-//                               Address ID: {address.address_id}
-//                             </Text>
-//                           </Box>
-//                         </Flex>
-
-//                         {/* Remove Button */}
-//                         <Button
-//                           size="sm"
-//                           variant="ghost"
-//                           colorScheme="red"
-//                           onClick={() => removeAddress(address.address_id)}
-//                           p={2}
-//                           minW="auto"
-//                           height="auto"
-//                           borderRadius="full"
-//                           _hover={{ bg: 'red.50' }}
-//                         >
-//                           <Icon as={X} w={4} h={4} />
-//                         </Button>
-//                       </Flex>
-//                     </Box>
-//                   );
-//                 })}
-//               </VStack>
-//             )}
-
-//             {/* Selection Summary */}
-//             {addresses.length > 0 && (
-//               <Box
-//                 bg="blue.50"
-//                 border="1px solid"
-//                 borderColor="blue.200"
-//                 borderRadius="lg"
-//                 p={4}
-//                 mb={6}
-//               >
-//                 <Text fontSize="sm" color="blue.800">
-//                   <strong>{selectedAddresses.length}</strong> of <strong>{addresses.length}</strong> addresses selected
-//                 </Text>
-//               </Box>
-//             )}
-
-//             {/* Next Step Button */}
-//             <NextButton 
-//               onClick={handleNextStep} 
-//               isLoading={isSubmitting}
-//               label={isSubmitting ? "Sending verification code..." : "Next step"}
-//             />
-
-//             {/* Bottom Centered Content */}
-//             <VStack spacing={4} align="center" mt={6}>
-//               {/* Trustpilot Rating */}
-//               <Trustpilot size="md" />
-//             </VStack>
-//           </Box>
-
-//           {/* Bottom Features */}
-//           <Box w="full" maxW={{ base: "full", md: "2xl" }}>
-//             <SecureBar />
-//           </Box>
-//         </VStack>
-//       </Container>
-
-//       <Footer />
-//     </Box>
-//   );
-// };
-
-// export default PreviousAddressesPage;
-
-
 import React, { useState, useEffect } from 'react';
 import {
   Container,
@@ -539,6 +38,14 @@ import { inviteUser } from '../../../api/services/inviteUser';
 import { storeOtpReference } from '../../../api/services/verifyOTP';
 import api from '../../../api/index';
 
+
+interface AddressState {
+  addresses: BestMatchAddress[];
+  removedAddressIds: string[];
+  addedAddresses: BestMatchAddress[];
+  lastFetchTime: number;
+}
+
 export const PreviousAddressesPage: React.FC = () => {
   const navigate = useNavigate();
   const { config } = useTenant();
@@ -547,7 +54,10 @@ export const PreviousAddressesPage: React.FC = () => {
   
   // Main addresses state
   const [addresses, setAddresses] = useState<BestMatchAddress[]>([]);
+  const [removedAddressIds, setRemovedAddressIds] = useState<string[]>([]);
+  const [addedAddresses, setAddedAddresses] = useState<BestMatchAddress[]>([]);
   const [loading, setLoading] = useState(true);
+  const [, setInitialLoadComplete] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [addressError, setAddressError] = useState<string | null>(null);
@@ -559,6 +69,42 @@ export const PreviousAddressesPage: React.FC = () => {
   const [modalSelectedId, setModalSelectedId] = useState<number | null>(null);
   const [modalOpenDropdown, setModalOpenDropdown] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+
+  const LOCAL_STORAGE_KEY = 'previous_addresses_state';
+
+  // Save state to localStorage
+  const saveStateToStorage = (state: Partial<AddressState>) => {
+    try {
+      const currentState = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const parsedState: AddressState = currentState ? JSON.parse(currentState) : {
+        addresses: [],
+        removedAddressIds: [],
+        addedAddresses: [],
+        lastFetchTime: 0
+      };
+
+      const newState = { ...parsedState, ...state, lastFetchTime: Date.now() };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newState));
+      console.log('State saved to localStorage:', newState);
+    } catch (error) {
+      console.error('Error saving state to localStorage:', error);
+    }
+  };
+
+  // Load state from localStorage
+  const loadStateFromStorage = (): AddressState | null => {
+    try {
+      const storedState = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (storedState) {
+        const parsedState: AddressState = JSON.parse(storedState);
+        console.log('State loaded from localStorage:', parsedState);
+        return parsedState;
+      }
+    } catch (error) {
+      console.error('Error loading state from localStorage:', error);
+    }
+    return null;
+  };
 
   // Check if user is authenticated
   useEffect(() => {
@@ -579,20 +125,76 @@ export const PreviousAddressesPage: React.FC = () => {
     }
   }, [navigate, toast]);
 
-  // Fetch addresses on component mount
+  // Load saved state on component mount
   useEffect(() => {
-    const loadAddresses = async () => {
+    const savedState = loadStateFromStorage();
+    if (savedState) {
+      console.log('Restoring state from localStorage');
+      setAddresses(savedState.addresses);
+      setRemovedAddressIds(savedState.removedAddressIds);
+      setAddedAddresses(savedState.addedAddresses);
+      
+      // Check if we need to fetch fresh data (e.g., if more than 1 hour old)
+      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+      if (savedState.lastFetchTime > oneHourAgo) {
+        console.log('Using cached data (less than 1 hour old)');
+        setLoading(false);
+        setInitialLoadComplete(true);
+        return;
+      }
+    }
+    
+    // Fetch fresh data if no saved state or it's old
+    loadAddresses();
+  }, []);
+
+  // Fetch addresses from API
+  const loadAddresses = async () => {
+    if (!authError) {
       try {
         setLoading(true);
         setAuthError(null);
         setAddressError(null);
         
-        console.log('Fetching user addresses...');
+        console.log('Fetching user addresses from API...');
         const fetchedAddresses = await fetchUserAddresses();
         console.log('Fetched addresses:', fetchedAddresses);
         console.log('Number of addresses:', fetchedAddresses.length);
         
-        setAddresses(fetchedAddresses);
+        // Apply any previous removals and additions
+        const savedState = loadStateFromStorage();
+        let finalAddresses = fetchedAddresses;
+        let currentRemovedIds: string[] = [];
+        let currentAddedAddresses: BestMatchAddress[] = [];
+        
+        if (savedState) {
+          // Remove previously removed addresses
+          finalAddresses = fetchedAddresses.filter(addr => 
+            !savedState.removedAddressIds.includes(addr.address_id)
+          );
+          
+          // Add previously added addresses (that aren't already in the fetched list)
+          const existingIds = fetchedAddresses.map(addr => addr.address_id);
+          const uniqueAddedAddresses = savedState.addedAddresses.filter(addr => 
+            !existingIds.includes(addr.address_id)
+          );
+          
+          finalAddresses = [...finalAddresses, ...uniqueAddedAddresses];
+          currentRemovedIds = savedState.removedAddressIds;
+          currentAddedAddresses = savedState.addedAddresses;
+        }
+        
+        setAddresses(finalAddresses);
+        setRemovedAddressIds(currentRemovedIds);
+        setAddedAddresses(currentAddedAddresses);
+        
+        // Save to localStorage
+        saveStateToStorage({
+          addresses: finalAddresses,
+          removedAddressIds: currentRemovedIds,
+          addedAddresses: currentAddedAddresses
+        });
+        
       } catch (error: any) {
         console.error('Error loading addresses:', error);
         
@@ -620,13 +222,10 @@ export const PreviousAddressesPage: React.FC = () => {
         }
       } finally {
         setLoading(false);
+        setInitialLoadComplete(true);
       }
-    };
-
-    if (!authError) {
-      loadAddresses();
     }
-  }, [toast, navigate, authError]);
+  };
 
   // Format address for display
   const formatAddress = (address: BestMatchAddress): string => {
@@ -665,7 +264,27 @@ export const PreviousAddressesPage: React.FC = () => {
 
   // Remove address from list
   const removeAddress = (addressId: string) => {
-    setAddresses(prev => prev.filter(addr => addr.address_id !== addressId));
+    console.log('Removing address:', addressId);
+    
+    // Update addresses state
+    const updatedAddresses = addresses.filter(addr => addr.address_id !== addressId);
+    setAddresses(updatedAddresses);
+    
+    // Update removed IDs state
+    const updatedRemovedIds = [...removedAddressIds, addressId];
+    setRemovedAddressIds(updatedRemovedIds);
+    
+    // Update added addresses state (remove from added if it was added)
+    const updatedAddedAddresses = addedAddresses.filter(addr => addr.address_id !== addressId);
+    setAddedAddresses(updatedAddedAddresses);
+    
+    // Save to localStorage
+    saveStateToStorage({
+      addresses: updatedAddresses,
+      removedAddressIds: updatedRemovedIds,
+      addedAddresses: updatedAddedAddresses
+    });
+    
     toast({
       title: "Address Removed",
       description: "Address has been removed from your list.",
@@ -767,7 +386,27 @@ export const PreviousAddressesPage: React.FC = () => {
           isClosable: true,
         });
       } else {
-        setAddresses(prev => [...prev, newAddress]);
+        console.log('Adding new address:', newAddress);
+        
+        // Update addresses state
+        const updatedAddresses = [...addresses, newAddress];
+        setAddresses(updatedAddresses);
+        
+        // Update added addresses state
+        const updatedAddedAddresses = [...addedAddresses, newAddress];
+        setAddedAddresses(updatedAddedAddresses);
+        
+        // Remove from removed IDs if it was previously removed
+        const updatedRemovedIds = removedAddressIds.filter(id => id !== newAddress.address_id);
+        setRemovedAddressIds(updatedRemovedIds);
+        
+        // Save to localStorage
+        saveStateToStorage({
+          addresses: updatedAddresses,
+          removedAddressIds: updatedRemovedIds,
+          addedAddresses: updatedAddedAddresses
+        });
+        
         toast({
           title: "Address Added",
           description: "New address has been added to your list.",
@@ -789,6 +428,11 @@ export const PreviousAddressesPage: React.FC = () => {
 
   // Submit addresses to backend
   const submitAddresses = async (addressesToSubmit: BestMatchAddress[]) => {
+    if (addressesToSubmit.length === 0) {
+      console.log('No addresses to submit');
+      return { results: [] };
+    }
+
     try {
       const accessToken = localStorage.getItem('access_token');
       
@@ -843,12 +487,10 @@ export const PreviousAddressesPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Submit addresses to backend if any exist
-      if (addresses.length > 0) {
-        console.log('Submitting addresses to backend...');
-        const addressResponse = await submitAddresses(addresses);
-        console.log('Address submission successful:', addressResponse);
-      }
+      // Submit addresses to backend
+      console.log('Submitting addresses to backend...');
+      const addressResponse = await submitAddresses(addresses);
+      console.log('Address submission successful:', addressResponse);
       
       // Call invite API to send OTP
       console.log('Calling invite API...');
@@ -860,6 +502,9 @@ export const PreviousAddressesPage: React.FC = () => {
         const reference = inviteResponse.invite_response.Info.Data.reference;
         storeOtpReference(reference);
         console.log('OTP reference stored:', reference);
+        
+        // Clear the saved state since we're moving to the next step
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
         
         toast({
           title: "Processing Complete",
@@ -992,9 +637,10 @@ export const PreviousAddressesPage: React.FC = () => {
                 borderRadius="lg"
                 border="1px solid"
                 borderColor="gray.200"
+                mb={4}
               >
                 <Text color="gray.600" fontSize="md" mb={4}>
-                  No additional addresses found for your account.
+                  No addresses in your list.
                 </Text>
                 <Text color="gray.500" fontSize="sm">
                   You can add previous addresses using the button above or continue to the next step.
@@ -1004,6 +650,7 @@ export const PreviousAddressesPage: React.FC = () => {
               <VStack spacing={3} align="stretch" mb={6}>
                 {addresses.map((address) => {
                   const formattedAddress = formatAddress(address);
+                  const isAddedAddress = addedAddresses.some(added => added.address_id === address.address_id);
                   
                   return (
                     <Box
@@ -1011,25 +658,40 @@ export const PreviousAddressesPage: React.FC = () => {
                       p={4}
                       borderRadius="lg"
                       border="2px solid"
-                      borderColor="gray.200"
-                      bg="white"
+                      borderColor={isAddedAddress ? config.accentColor : "gray.200"}
+                      bg={isAddedAddress ? config.accentLightColor : "white"}
                       transition="all 0.2s"
                       _hover={{
-                        borderColor: 'gray.300',
-                        bg: 'gray.50'
+                        borderColor: isAddedAddress ? config.accentColor : 'gray.300',
+                        bg: isAddedAddress ? config.accentLightColor : 'gray.50'
                       }}
                     >
                       <Flex justify="space-between" align="flex-start" gap={4}>
                         <Box flex="1">
-                          <Text
-                            fontSize="md"
-                            fontWeight="medium"
-                            color="gray.900"
-                            lineHeight="1.4"
-                          >
-                            {formattedAddress}
-                          </Text>
-                          <Text fontSize="sm" color="gray.500" mt={1}>
+                          <Flex align="center" gap={2} mb={1}>
+                            <Text
+                              fontSize="md"
+                              fontWeight="medium"
+                              color="gray.900"
+                              lineHeight="1.4"
+                            >
+                              {formattedAddress}
+                            </Text>
+                            {isAddedAddress && (
+                              <Text
+                                fontSize="xs"
+                                color={config.accentColor}
+                                fontWeight="bold"
+                                bg="white"
+                                px={2}
+                                py={1}
+                                borderRadius="md"
+                              >
+                                ADDED
+                              </Text>
+                            )}
+                          </Flex>
+                          <Text fontSize="sm" color="gray.500">
                             Address ID: {address.address_id}
                           </Text>
                         </Box>
@@ -1067,6 +729,11 @@ export const PreviousAddressesPage: React.FC = () => {
               >
                 <Text fontSize="sm" color="blue.800">
                   <strong>{addresses.length}</strong> address{addresses.length !== 1 ? 'es' : ''} will be submitted
+                  {addedAddresses.length > 0 && (
+                    <Text as="span" ml={2} color="purple.700">
+                      ({addedAddresses.length} manually added)
+                    </Text>
+                  )}
                 </Text>
               </Box>
             )}
@@ -1094,7 +761,7 @@ export const PreviousAddressesPage: React.FC = () => {
       <Footer />
 
       {/* Add Address Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+      <Modal isOpen={isOpen} onClose={onClose} size="lg" >
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Add Previous Address</ModalHeader>
@@ -1109,6 +776,9 @@ export const PreviousAddressesPage: React.FC = () => {
               <HStack spacing={4}>
                 <Input
                   placeholder="Postcode"
+                  size="lg"
+                  flex="3"
+                  height="56px"
                   value={modalPostcode}
                   onChange={(e) => setModalPostcode(e.target.value)}
                   bg="white"
@@ -1125,6 +795,9 @@ export const PreviousAddressesPage: React.FC = () => {
                   fontWeight="medium"
                   isLoading={modalLoading}
                   loadingText="Finding..."
+                  h="48px"
+                  borderRadius="full"
+                  rightIcon={<Text as="span" ml={1}>→</Text>}
                 >
                   Find
                 </Button>
@@ -1135,12 +808,13 @@ export const PreviousAddressesPage: React.FC = () => {
                 <Box
                   border="2px solid #E2E8F0"
                   borderRadius="md"
+                  mb={4}
                   cursor="pointer"
                   onClick={() => setModalOpenDropdown(!modalOpenDropdown)}
                 >
                   <Flex alignItems="center" justifyContent="space-between" p={4}>
                     <Text fontSize="md" color="black" fontWeight="medium" noOfLines={1}>
-                      {modalSelectedId !== null ? modalAddresses.find((a) => a.id === modalSelectedId)?.label : 'Select Address'}
+                      {modalSelectedId !== null ? modalAddresses.find((a) => a.id === modalSelectedId)?.label : 'Select'}
                     </Text>
                     <ChevronDown
                       size={20}
@@ -1152,7 +826,7 @@ export const PreviousAddressesPage: React.FC = () => {
                     />
                   </Flex>
                   {modalOpenDropdown && (
-                    <Box borderTop="1px solid #E2E8F0" maxH="200px" overflowY="auto">
+                    <Box borderTop="1px solid #E2E8F0" maxH="240px" overflowY="auto">
                       {modalAddresses.map((addr) => (
                         <Box
                           key={addr.id}
@@ -1164,7 +838,7 @@ export const PreviousAddressesPage: React.FC = () => {
                             setModalOpenDropdown(false);
                           }}
                         >
-                          <Text fontSize="sm" color="gray.900">
+                          <Text fontSize="md" color="gray.900">
                             {addr.label}
                           </Text>
                         </Box>
@@ -1182,6 +856,7 @@ export const PreviousAddressesPage: React.FC = () => {
                   bg={config.primaryLightColor}
                   borderRadius="md"
                   p={4}
+                  mb={6}
                 >
                   <Text whiteSpace="pre-line" fontSize="sm" color="gray.800">
                     {modalAddresses.find((a) => a.id === modalSelectedId)?.lines}
@@ -1201,6 +876,7 @@ export const PreviousAddressesPage: React.FC = () => {
               _hover={{ bg: config.accentColor }}
               onClick={handleAddAddress}
               isDisabled={modalSelectedId === null}
+              borderRadius="lg"
             >
               Add Address
             </Button>

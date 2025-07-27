@@ -13,7 +13,7 @@ import {
 import ClaimProgress from './ClaimProgress';
 import { ArrowRightIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
-import Button from '../../Onboarding/Common/Button';
+import Button from '../../Onboarding/Common/CustomButton';
 import { useTenant } from '../../../contexts/TenantContext';
 
 interface ClaimCardProps {

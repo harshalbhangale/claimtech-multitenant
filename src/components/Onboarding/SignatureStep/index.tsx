@@ -17,7 +17,7 @@ import { Header } from '../Common/Header';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
-import Button from '../Common/Button';
+import Button from '../Common/CustomButton';
 import { saveSignature, getSavedSignature, clearSignature } from '../../../utils/signatureStorage';
 import { submitSignature, canvasToFile } from '../../../api/services/submitSignature';
 const SignatureStep: React.FC = () => {

@@ -83,7 +83,7 @@ const OtpVerify: React.FC = () => {
         
         // Navigate to next step after verification
         setTimeout(() => {
-          navigate('/auth/contactdetails');
+          navigate('/auth/missingagreements');
         }, 1500);
       } else {
         setError('Verification failed. Please try again.');
