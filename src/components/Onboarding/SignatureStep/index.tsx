@@ -379,6 +379,7 @@ const SignatureStep: React.FC = () => {
               mb={6}
               isLoading={isLoading}
               loadingText="Submitting signature..."
+              _hover={{ bg: `${config.primaryColor}CC` }}
             >
               Find my agreements
             </Button>

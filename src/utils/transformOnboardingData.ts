@@ -2,7 +2,8 @@
 import type { RegisterUserData } from '../api/services/registerUser';
 import { 
   getContactDetails, 
-  getUserDetails
+  getUserDetails,
+  getLenderSelection
 } from './onboardingStorage';
 import { getSelectedAddress } from './addressStorage';
 
@@ -12,10 +13,12 @@ export const transformOnboardingDataForRegistration = (): RegisterUserData | nul
     const contactDetails = getContactDetails();
     const userDetails = getUserDetails();
     const selectedAddress = getSelectedAddress();
+    const lenderSelection = getLenderSelection();
 
     console.log('Contact Details:', contactDetails);
     console.log('User Details:', userDetails);
     console.log('Selected Address:', selectedAddress);
+    console.log('Lender Selection:', lenderSelection);
 
     if (!contactDetails || !userDetails || !selectedAddress) {
       console.error('Missing required onboarding data');
@@ -52,6 +55,11 @@ export const transformOnboardingDataForRegistration = (): RegisterUserData | nul
       return cleaned;
     };
 
+    // Get all selected lender IDs (or empty array if none selected)
+    const lenderIds = lenderSelection?.selectedLenders || [];
+    console.log('Lender selection from storage:', lenderSelection);
+    console.log('Extracted lender IDs:', lenderIds);
+
     const registrationData: RegisterUserData = {
       address: selectedAddress.raw,
       first_name: userDetails.firstName.trim(),
@@ -59,7 +67,8 @@ export const transformOnboardingDataForRegistration = (): RegisterUserData | nul
       middle: '', // Optional field
       dob: formatDob(userDetails.dob),
       phone: formatPhone(contactDetails.mobile),
-      email: contactDetails.email.trim()
+      email: contactDetails.email.trim(),
+      lender: lenderIds
     };
 
     console.log('Transformed onboarding data:', registrationData);

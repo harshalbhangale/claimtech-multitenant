@@ -8,6 +8,9 @@ import {
   Flex,
   Link,
   Icon,
+  Spinner,
+  Alert,
+  AlertIcon,
 } from '@chakra-ui/react';
 import { ChevronDown, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -20,10 +23,15 @@ import { ClaimUpTo } from '../Common/Claimupto';
 import Trustpilot from '../../Onboarding/Common/Trustpilot';
 import NextButton from '../../Onboarding/Common/NextButton';
 import { saveLenderSelection, getLenderSelection } from '../../../utils/onboardingStorage';
+import { getLenders } from '../../../api/services/getLenders';
+import type { LenderGroup } from '../../../api/services/getLenders';
 
 const LenderSelection: React.FC = () => {
   const [selectedLenders, setSelectedLenders] = useState<string[]>([]);
   const [showMoreLenders, setShowMoreLenders] = useState(false);
+  const [lenders, setLenders] = useState<LenderGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { config } = useTenant();
 
@@ -31,46 +39,68 @@ const LenderSelection: React.FC = () => {
   useEffect(() => {
     const savedLenderSelection = getLenderSelection();
     if (savedLenderSelection) {
-      setSelectedLenders(savedLenderSelection.selectedLenders);
+      // Validate that saved lenders are valid IDs (UUID format)
+      const validLenderIds = savedLenderSelection.selectedLenders.filter(id => 
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+      );
+      
+      if (validLenderIds.length !== savedLenderSelection.selectedLenders.length) {
+        console.log('Cleaning up invalid lender data:', {
+          original: savedLenderSelection.selectedLenders,
+          valid: validLenderIds
+        });
+        // Save the cleaned data
+        saveLenderSelection({
+          selectedLenders: validLenderIds
+        });
+      }
+      
+      setSelectedLenders(validLenderIds);
     }
   }, []);
-  
-  const mainLenders = [
-    'Barclays Finance',
-    'Black Horse',
-    'BMW Finance',
-    'Close Brothers Motor Finance',
-    'Mercedes-Benz Financial Services',
-    'Motonovo Finance',
-    'Santander Consumer Finance',
-    'Volkswagen Finance'
-  ];
 
-  const extraLenders = [
-    'Ford Credit',
-    'Toyota Financial Services',
-    'Nissan Finance',
-    'Vauxhall Finance',
-  ];
+  // Fetch lenders from API
+  useEffect(() => {
+    const fetchLenders = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getLenders();
+        setLenders(response.lender_groups);
+      } catch (err) {
+        console.error('Error fetching lenders:', err);
+        setError('Failed to load lenders. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Toggles lender selection state
-  const toggleLender = (lender: string) => {
-    setSelectedLenders(prev =>
-      prev.includes(lender)
-        ? prev.filter(l => l !== lender)
-        : [...prev, lender]
-    );
+    fetchLenders();
+  }, []);
+
+  // Separate lenders by priority
+  const mainLenders = lenders.filter(lender => lender.priority === 10);
+  const additionalLenders = lenders.filter(lender => lender.priority === 0);
+
+  // Format lender display name with other brands
+  const formatLenderName = (lender: LenderGroup): string => {
+    return lender.on_display_name;
   };
 
-  // const handleLenderSelect = (lender: string) => {
-  //   setSelectedLenders(prev => 
-  //     prev.includes(lender) 
-  //       ? prev.filter(l => l !== lender)
-  //       : [...prev, lender]
-  //   );
-  // };
+  // Toggles lender selection state
+  const toggleLender = (lenderId: string) => {
+    console.log('Toggling lender:', lenderId);
+    setSelectedLenders(prev => {
+      const newSelection = prev.includes(lenderId)
+        ? prev.filter(l => l !== lenderId)
+        : [...prev, lenderId];
+      console.log('Updated selection:', newSelection);
+      return newSelection;
+    });
+  };
 
   const handleNextStep = () => {
+    console.log('Saving lender selection:', selectedLenders);
     // Save selected lenders to localStorage
     saveLenderSelection({
       selectedLenders
@@ -87,6 +117,46 @@ const LenderSelection: React.FC = () => {
     
     navigate('/auth/userdetails');
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Box minH="100vh" bg="white" w="100%">
+        <Header />
+        <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} flex="1" px={{ base: 4, sm: 6, lg: 8 }}>
+          <VStack spacing={{ base: 4, md: 6 }} justify="center" minH="60vh">
+            <Spinner size="xl" color={config.accentColor} />
+            <Text color="gray.600">Loading lenders...</Text>
+          </VStack>
+        </Container>
+        <Footer />
+      </Box>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <Box minH="100vh" bg="white" w="100%">
+        <Header />
+        <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} flex="1" px={{ base: 4, sm: 6, lg: 8 }}>
+          <VStack spacing={{ base: 4, md: 6 }} justify="center" minH="60vh">
+            <Alert status="error" borderRadius="lg">
+              <AlertIcon />
+              {error}
+            </Alert>
+            <Button 
+              onClick={() => window.location.reload()} 
+              colorScheme="blue"
+            >
+              Try Again
+            </Button>
+          </VStack>
+        </Container>
+        <Footer />
+      </Box>
+    );
+  }
   
   return (
     <Box minH="100vh" bg="white" w="100%">
@@ -147,11 +217,11 @@ const LenderSelection: React.FC = () => {
           {/* Lenders List */}
           <Box w="full" maxW={{ base: "full", md: "2xl" }}>
             <VStack spacing={2} w="full" mb={4}>
-              {mainLenders.map((lender, _idx) => {
-                const isSelected = selectedLenders.includes(lender);
+              {mainLenders.map((lender) => {
+                const isSelected = selectedLenders.includes(lender.id);
                 return (
                   <Box
-                    key={lender}
+                    key={lender.id}
                     w="full"
                     p={2}
                     borderRadius="lg"
@@ -159,7 +229,7 @@ const LenderSelection: React.FC = () => {
                     borderColor={isSelected ? config.accentColor : config.inactiveColor}
                     bg={isSelected ? '#F3F0FF' : 'white'}
                     cursor="pointer"
-                    onClick={() => toggleLender(lender)}
+                    onClick={() => toggleLender(lender.id)}
                     _hover={{ 
                       borderColor: isSelected ? config.accentColor : "#D1D5DB",
                       bg: isSelected ? "#F3F0FF" : "#F8F9FA"
@@ -174,7 +244,7 @@ const LenderSelection: React.FC = () => {
                         fontSize="sm"
                         pr={2}
                       >
-                        {lender}
+                        {formatLenderName(lender)}
                       </Text>
                       <Box
                         w="24px"
@@ -201,40 +271,42 @@ const LenderSelection: React.FC = () => {
                 );
               })}
 
-              {/* Insert the View More button after half of the main lender items */}
-              <Button
-                w="full"
-                variant="outline"
-                bg={config.accentLightColor || config.inactiveColor}
-                borderColor={config.accentColor}
-                color="black"
-                p={4}
-                px={5}
-                onClick={() => setShowMoreLenders(!showMoreLenders)}
-                _hover={{ bg: '#E9E5FF', color: '#5B34C8'}}
-                fontWeight="bold"
-                height="auto"
-                borderRadius="lg"
-                fontSize="md"
-                alignSelf="center"
-                mt={4}
-                mb={4}
-              >
-                <Flex w="full" justify="space-between" align="center">
-                  <Text>{showMoreLenders ? 'Hide lenders' : 'View more lenders'}</Text>
-                  <ChevronDown 
-                    size={20} 
-                    style={{ transform: showMoreLenders ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
-                  />
-                </Flex>
-              </Button>
+              {/* Insert the View More button after main lenders */}
+              {additionalLenders.length > 0 && (
+                <Button
+                  w="full"
+                  variant="outline"
+                  bg={config.accentLightColor || config.inactiveColor}
+                  borderColor={config.accentColor}
+                  color="black"
+                  p={4}
+                  px={5}
+                  onClick={() => setShowMoreLenders(!showMoreLenders)}
+                  _hover={{ bg: '#E9E5FF', color: '#5B34C8'}}
+                  fontWeight="bold"
+                  height="auto"
+                  borderRadius="lg"
+                  fontSize="md"
+                  alignSelf="center"
+                  mt={4}
+                  mb={4}
+                >
+                  <Flex w="full" justify="space-between" align="center">
+                    <Text>{showMoreLenders ? 'Hide lenders' : 'View more lenders'}</Text>
+                    <ChevronDown 
+                      size={20} 
+                      style={{ transform: showMoreLenders ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+                    />
+                  </Flex>
+                </Button>
+              )}
 
               {/* Additional lenders when expanded */}
-              {showMoreLenders && extraLenders.map((lender) => {
-                const isSelected = selectedLenders.includes(lender);
+              {showMoreLenders && additionalLenders.map((lender) => {
+                const isSelected = selectedLenders.includes(lender.id);
                 return (
                   <Box
-                  key={lender}
+                  key={lender.id}
                   w="full"
                   p={2}
                   borderRadius="lg"
@@ -242,7 +314,7 @@ const LenderSelection: React.FC = () => {
                   borderColor={isSelected ? config.accentColor : config.inactiveColor}
                   bg={isSelected ? '#F3F0FF' : 'white'}
                   cursor="pointer"
-                  onClick={() => toggleLender(lender)}
+                  onClick={() => toggleLender(lender.id)}
                   _hover={{ 
                     borderColor: isSelected ? config.accentColor : "#D1D5DB",
                     bg: isSelected ? "#F3F0FF" : "#F8F9FA"
@@ -254,10 +326,10 @@ const LenderSelection: React.FC = () => {
                       <Text 
                         color="gray.900"
                         fontWeight={isSelected ? "bold" : "medium"}
-                        fontSize="md"
+                        fontSize="sm"
                         pr={2}
                       >
-                        {lender}
+                        {formatLenderName(lender)}
                       </Text>
                       <Box
                         w="24px"

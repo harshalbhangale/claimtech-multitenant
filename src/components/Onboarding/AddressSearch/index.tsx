@@ -20,6 +20,7 @@ import Trustpilot from '../../Onboarding/Common/Trustpilot';
 import { fetchAddressesByPostcode } from '../../../api/services/addressCheck';
 import { saveSelectedAddress, getSelectedAddress } from '../../../utils/addressStorage';
 import type { RawAddress, FormattedAddress } from '../../../types/address';
+import NextButton from '../Common/NextButton';
 
 const AddressSearch: React.FC = () => {
   const navigate = useNavigate();
@@ -218,25 +219,7 @@ const AddressSearch: React.FC = () => {
             )}
 
             {/* Next Step */}
-            <Button
-              w="full"
-              bg={config.primaryColor}
-              color="black"
-              p={6}
-              mb={6}
-              onClick={handleNext}
-              _hover={{ bg: '#A8EF7D' }}
-              _active={{ transform: 'scale(0.98)' }}
-              fontWeight="medium"
-              height="auto"
-              fontSize="md"
-              borderRadius="full"
-              rightIcon={<Text as="span" ml={1}>→</Text>}
-              minH="56px"
-              isDisabled={selectedId === null}
-            >
-              Next step
-            </Button>
+            <NextButton onClick={handleNext} label="Next step" />
 
             {/* Trustpilot */}
             <Trustpilot size="md" />

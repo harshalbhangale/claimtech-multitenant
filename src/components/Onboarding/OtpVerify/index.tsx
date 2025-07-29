@@ -215,7 +215,7 @@ const OtpVerify: React.FC = () => {
               color="black"
               h="56px"
               borderRadius="full"
-              _hover={{ bg: '#A8EF7D' }}
+              _hover={{ bg: `${config.primaryColor}CC` }}
               _disabled={{ 
                 opacity: 0.6, 
                 cursor: 'not-allowed',

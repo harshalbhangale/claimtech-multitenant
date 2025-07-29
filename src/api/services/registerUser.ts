@@ -10,6 +10,7 @@ export interface RegisterUserData {
   dob: string; // Format: YYYY-MM-DD
   phone: string;
   email: string;
+  lender: string[]; // Array of selected lender IDs
 }
 
 export interface RegisterUserResponse {
