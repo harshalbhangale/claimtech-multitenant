@@ -19,7 +19,7 @@ import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import Button from '../Common/CustomButton';
 import { saveSignature, getSavedSignature, clearSignature } from '../../../utils/signatureStorage';
-import { submitSignature, canvasToFile } from '../../../api/services/submitSignature';
+import { submitSignature, canvasToFile } from '../../../api/services/onboarding/submitSignature';
 const SignatureStep: React.FC = () => {
   const sigCanvasRef = useRef<any>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);

@@ -20,7 +20,7 @@ import {
   getOtpReference, 
   clearOtpReference,
   storeOtpReference 
-} from '../../../api/services/verifyOTP';
+} from '../../../api/services/onboarding/verifyOTP';
 
 const OtpVerify: React.FC = () => {
   const { config } = useTenant();
@@ -30,7 +30,7 @@ const OtpVerify: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [otpReference, setOtpReference] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   // Load OTP reference from localStorage on component mount

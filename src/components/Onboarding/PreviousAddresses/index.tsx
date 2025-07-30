@@ -30,12 +30,12 @@ import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import NextButton from '../Common/NextButton';
 import Trustpilot from '../Common/Trustpilot';
-import { fetchUserAddresses } from '../../../api/services/addressMatch';
-import type { BestMatchAddress } from '../../../api/services/addressMatch';
-import { fetchAddressesByPostcode } from '../../../api/services/addressCheck';
+import { fetchUserAddresses } from '../../../api/services/onboarding/addressMatch';
+import type { BestMatchAddress } from '../../../api/services/onboarding/addressMatch';
+import { fetchAddressesByPostcode } from '../../../api/services/onboarding/addressCheck';
 import type { RawAddress, FormattedAddress } from '../../../types/address';
-import { inviteUser } from '../../../api/services/inviteUser';
-import { storeOtpReference } from '../../../api/services/verifyOTP';
+import { inviteUser } from '../../../api/services/onboarding/inviteUser';
+import { storeOtpReference } from '../../../api/services/onboarding/verifyOTP';
 import api from '../../../api/index';
 
 

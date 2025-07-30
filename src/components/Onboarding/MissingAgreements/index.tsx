@@ -21,36 +21,47 @@ import { Header } from '../Common/Header';
 import { ClaimUpTo } from '../Common/Claimupto';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { useTenant } from '../../../contexts/TenantContext';
-import { getLenders } from '../../../api/services/getLenders';
-import type { LenderGroup } from '../../../api/services/getLenders';
+import { getLenders } from '../../../api/services/onboarding/getLenders';
+import type { LenderGroup } from '../../../api/services/onboarding/getLenders';
+import { getLenderClaims, addLendersToClaims } from '../../../api/services/onboarding/MissingLenders';
+import type { LenderClaim } from '../../../api/services/onboarding/MissingLenders';
 
 const MissingAgreements: React.FC = () => {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(true);
   const [selected, setSelected] = useState<string[]>([]);
   const [lenders, setLenders] = useState<LenderGroup[]>([]);
+  const [existingClaims, setExistingClaims] = useState<LenderClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { config } = useTenant();
 
-  // Fetch lenders from API
+  // Fetch lenders and existing claims from API
   useEffect(() => {
-    const fetchLenders = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await getLenders();
-        setLenders(response.lender_groups);
+        
+        // Fetch both lenders and existing claims in parallel
+        const [lendersResponse, claimsResponse] = await Promise.all([
+          getLenders(),
+          getLenderClaims()
+        ]);
+        
+        setLenders(lendersResponse.lender_groups);
+        setExistingClaims(claimsResponse);
       } catch (err) {
-        console.error('Error fetching lenders:', err);
-        setError('Failed to load lenders. Please try again.');
+        console.error('Error fetching data:', err);
+        setError('Failed to load data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLenders();
+    fetchData();
   }, []);
 
   // Format lender display name with other brands
@@ -66,9 +77,27 @@ const MissingAgreements: React.FC = () => {
     formatLenderName(l).toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleContinue = () => {
-    // TODO send selected agreements to backend
-    navigate('/dashboard');
+  const handleContinue = async () => {
+    if (selected.length === 0) {
+      navigate('/dashboard');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      // Add selected lenders to claims
+      await addLendersToClaims(selected);
+      
+      console.log('Successfully added lenders to claims');
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Error adding lenders to claims:', err);
+      setError('Failed to add lenders. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Show loading state
@@ -135,9 +164,15 @@ const MissingAgreements: React.FC = () => {
           <Box bg="#FAFAFA" p={3} fontSize="sm" fontWeight="bold" borderRadius="md">
             We have not received agreement details for these lenders:
           </Box>
-          <Box border="1.5px solid #E2E8F0" fontWeight="bold" p={3} fontSize="sm" borderRadius="md">
-            ZUTO FINANCE
-          </Box>
+          {existingClaims.length > 0 && (
+            <>
+              {existingClaims.map((claim) => (
+                <Box key={claim.id} border="1.5px solid #E2E8F0" fontWeight="bold" p={3} fontSize="sm" borderRadius="md">
+                  {claim.lender_name}
+                </Box>
+              ))}
+            </>
+          )}
           <Text fontSize="sm" textAlign="center" maxW="lg" mx="auto">
             Any lenders that we don't get over the next 24 hours. We will request the information
             directly from your lender. <strong >We need your ID for this on the next page.</strong>
@@ -222,9 +257,12 @@ const MissingAgreements: React.FC = () => {
             _hover={{ bg: `${config.primaryColor}80` }}
             fontWeight="medium"
             onClick={handleContinue}
-            rightIcon={<Text as="span" ml={1}>→</Text>}
+            isLoading={isSubmitting}
+            loadingText="Adding lenders..."
+            disabled={isSubmitting}
+            rightIcon={!isSubmitting ? <Text as="span" ml={1}>→</Text> : undefined}
           >
-            Continue
+            {isSubmitting ? 'Adding lenders...' : 'Continue'}
           </Button>
 
           <VStack spacing={3}>

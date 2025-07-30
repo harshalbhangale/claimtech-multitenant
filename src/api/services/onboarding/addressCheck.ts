@@ -1,5 +1,5 @@
-import api from '../index';
-import { getCachedAddresses, saveAddressesToCache, cleanExpiredCache } from '../../utils/addressStorage';
+import api from '../../index';
+import { getCachedAddresses, saveAddressesToCache, cleanExpiredCache } from '../../../utils/addressStorage';
 export interface RawAddress {
   address: string;
   address1: string;

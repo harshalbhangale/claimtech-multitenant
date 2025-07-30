@@ -23,8 +23,8 @@ import { ClaimUpTo } from '../Common/Claimupto';
 import Trustpilot from '../../Onboarding/Common/Trustpilot';
 import NextButton from '../../Onboarding/Common/NextButton';
 import { saveLenderSelection, getLenderSelection } from '../../../utils/onboardingStorage';
-import { getLenders } from '../../../api/services/getLenders';
-import type { LenderGroup } from '../../../api/services/getLenders';
+import { getLenders } from '../../../api/services/onboarding/getLenders';
+import type { LenderGroup } from '../../../api/services/onboarding/getLenders';
 
 const LenderSelection: React.FC = () => {
   const [selectedLenders, setSelectedLenders] = useState<string[]>([]);

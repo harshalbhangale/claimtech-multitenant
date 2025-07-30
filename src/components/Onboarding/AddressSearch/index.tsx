@@ -17,7 +17,7 @@ import { ProgressBar } from '../Common/ProgressBar';
 import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import Trustpilot from '../../Onboarding/Common/Trustpilot';
-import { fetchAddressesByPostcode } from '../../../api/services/addressCheck';
+import { fetchAddressesByPostcode } from '../../../api/services/onboarding/addressCheck';
 import { saveSelectedAddress, getSelectedAddress } from '../../../utils/addressStorage';
 import type { RawAddress, FormattedAddress } from '../../../types/address';
 import NextButton from '../Common/NextButton';

@@ -1,5 +1,5 @@
 // src/api/services/submitAddresses.ts
-import api from '../index';
+import api from '../../index';
 import type { BestMatchAddress } from './addressMatch';
 
 export interface SubmitAddressRequest {

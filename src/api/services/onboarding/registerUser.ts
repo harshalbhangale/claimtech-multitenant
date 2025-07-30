@@ -1,6 +1,6 @@
 // src/api/services/registerUser.ts
-import api from '../index';
-import type { RawAddress } from '../../types/address';
+import api from '../../index';
+import type { RawAddress } from './addressCheck';
 
 export interface RegisterUserData {
   address: RawAddress;

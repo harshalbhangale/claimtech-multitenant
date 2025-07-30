@@ -1,5 +1,5 @@
 // src/utils/transformOnboardingData.ts
-import type { RegisterUserData } from '../api/services/registerUser';
+import type { RegisterUserData } from '../api/services/onboarding/registerUser';
 import { 
   getContactDetails, 
   getUserDetails,

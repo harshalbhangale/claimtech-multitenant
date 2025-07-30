@@ -23,7 +23,7 @@ import NextButton from '../../Onboarding/Common/NextButton';
 import Trustpilot from '../Common/Trustpilot';
 import { saveContactDetails, getContactDetails } from '../../../utils/onboardingStorage';
 import { useAutoSave } from '../../../hooks/useAutoSave';
-import { registerUser } from '../../../api/services/registerUser';
+import { registerUser } from '../../../api/services/onboarding/registerUser';
 import { transformOnboardingDataForRegistration } from '../../../utils/transformOnboardingData';
 
 const ContactDetails: React.FC = () => {
