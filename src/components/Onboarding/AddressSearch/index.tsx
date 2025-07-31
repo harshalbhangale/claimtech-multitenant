@@ -148,7 +148,7 @@ const AddressSearch: React.FC = () => {
                 color="black"
                 h="56px"
                 borderRadius="full"
-                _hover={{ bg : config.accentColor }}
+                _hover={{ bg: `${config.primaryColor}CC` }}
                 onClick={handleFind}
                 fontWeight="medium"
                 rightIcon={<Text as="span" ml={1}>→</Text>}

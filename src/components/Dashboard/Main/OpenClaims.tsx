@@ -3,10 +3,32 @@ import { VStack, HStack, Text, Icon } from '@chakra-ui/react';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import ClaimCard from './ClaimCard';
 import { useTenant } from '../../../contexts/TenantContext';
+import { useState, useEffect } from 'react';
+import { getClaims } from '../../../api/services/dashboard/getClaims';
+import type { Claim } from '../../../api/services/dashboard/getClaims';
+import { Spinner, Alert, AlertIcon } from '@chakra-ui/react';
 
 const OpenClaims: React.FC = () => {
   const { config } = useTenant();
-  
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchClaims = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getClaims();
+        setClaims(data);
+      } catch (err) {
+        setError('Failed to load claims.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClaims();
+  }, []);
   return (
     <VStack spacing={4} align="stretch">
       <Text
@@ -37,26 +59,27 @@ const OpenClaims: React.FC = () => {
         </Text>
       </HStack>
 
-      <ClaimCard 
-        lender="Zuto" 
-        stage="Your LOA has been signed" 
-        progress={25} 
-        onUploadId={() => {}} 
-        onProvideDetails={() => {}} 
-      />
-          <ClaimCard 
-        lender="Black Horse" 
-        stage="Your LOA has been signed" 
-        progress={25} 
-        onUploadId={() => {}} 
-        onProvideDetails={() => {}} 
-      />    <ClaimCard 
-      lender="Barclay" 
-      stage="Your LOA has been signed" 
-      progress={25} 
-      onUploadId={() => {}} 
-      onProvideDetails={() => {}} 
-    />
+      {loading && <Spinner />}
+      {error && (
+        <Alert status="error">
+          <AlertIcon />
+          {error}
+        </Alert>
+      )}
+      {!loading && !error && claims.length === 0 && (
+        <Text color="gray.500" fontFamily="Poppins">No open claims found.</Text>
+      )}
+      {claims.map((claim) => (
+        <ClaimCard
+          key={claim.id}
+          id={claim.id}
+          lender={claim.lender_name}
+          stage={claim.status}
+          progress={25} // You can adjust this if you have a real progress value
+          onUploadId={() => {}}
+          onProvideDetails={() => {}}
+        />
+      ))}
     </VStack>
   );
 };

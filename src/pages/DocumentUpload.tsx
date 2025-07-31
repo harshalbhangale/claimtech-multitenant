@@ -1,14 +1,19 @@
 import { VStack, Heading, Text, Button, Image, SimpleGrid, Box, Icon, HStack, Input } from '@chakra-ui/react';
 import { IdentificationIcon, InformationCircleIcon, LockClosedIcon,  ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { useState, useRef } from 'react';
+import { DocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 import { Header } from '@/components/Dashboard/Main/Header';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
-
+import { uploadIdDocument } from '../api/services/dashboard/documentupload';
+import { useTenant }from '../contexts/TenantContext';
 const DocumentUpload = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const { config } = useTenant();
   const handleFileButtonClick = () => {
     fileInputRef.current?.click();
   };
@@ -18,6 +23,29 @@ const DocumentUpload = () => {
       setSelectedFile(e.target.files[0]);
     }
   };
+  const handleContinue = async () => {
+    if (!selectedFile) {
+      setUploadError('Please select a file to upload.');
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+    console.log("Uploading file:", selectedFile.name);
+
+    try {
+      const res = await uploadIdDocument(selectedFile);
+      console.log("Upload Success:", res);
+      setUploadSuccess('Document uploaded successfully!');
+      // You could also store res.document_id or res.id_document_url in state or context
+    } catch (err: any) {
+      console.error("Upload Error:", err);
+      setUploadError('Failed to upload document. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
 
   return (
     <Box minH="100vh" bg="white">
@@ -58,7 +86,7 @@ const DocumentUpload = () => {
           gap={2}
         >
           <Icon as={InformationCircleIcon} w={5} h={5} />
-          <Text fontFamily="Poppins" fontWeight="semibold" color="#1A1A1A">
+          <Text fontFamily="Poppins" fontWeight="semibold" color="#1A1A1A" >
             Accepted IDs: Passport or Driving Licence
           </Text>
         </Box>
@@ -111,6 +139,7 @@ const DocumentUpload = () => {
             </Box>
           ))}
         </SimpleGrid>
+        
         {/* File Upload Button */}
         <Input
           type="file"
@@ -119,35 +148,110 @@ const DocumentUpload = () => {
           ref={fileInputRef}
           onChange={handleFileChange}
         />
-        <Button
-          variant="outline"
-          borderColor="#6A47CF"
-          color="gray.800"
-          size="md"
-          fontWeight="md"
-          height="40px"
-          w="full"
-          maxW="150px"
-          fontFamily="Poppins"
-          borderRadius="full"
-          _hover={{ bg: '#F3F0FA' }}
-          alignSelf="flex-start"
-          mb={4}
-          onClick={handleFileButtonClick}
-        >
-          {selectedFile ? selectedFile.name : "Select file"}
-        </Button>
+        
+        {/* Selected File Preview */}
+        {selectedFile ? (
+          <VStack spacing={4} align="stretch" w="full">
+            <HStack 
+              p={4} 
+              bg="gray.50" 
+              borderRadius="lg" 
+              border="1px dashed" 
+              borderColor="gray.200"
+            >
+              <Icon as={DocumentIcon} w={5} h={5} color="gray.500" />
+              <Text fontSize="sm" color="gray.700" fontFamily="Poppins">
+                {selectedFile.name}
+              </Text>
+              <Text fontSize="sm" color="gray.500" ml="auto">
+                {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+              </Text>
+            </HStack>
+            
+            {uploadSuccess && (
+              <HStack 
+                p={4} 
+                bg="#E6F6EC" 
+                borderRadius="lg" 
+                border="1px solid" 
+                borderColor="#C3E6D1"
+              >
+                <Icon as={CheckIcon} w={5} h={5} color="green.500" />
+                <Text fontSize="sm" color="green.700" fontFamily="Poppins" fontWeight="medium">
+                  {uploadSuccess}
+                </Text>
+              </HStack>
+            )}
+            
+            {uploadError && (
+              <HStack 
+                p={4} 
+                bg="#FEE2E2" 
+                borderRadius="lg" 
+                border="1px solid" 
+                borderColor="#FCA5A5"
+              >
+                <Box as="svg" width="20px" height="20px" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" fill="#DC2626"/>
+                </Box>
+                <Text fontSize="sm" color="red.700" fontFamily="Poppins" fontWeight="medium">
+                  {uploadError}
+                </Text>
+              </HStack>
+            )}
+            
+            <Button
+              variant="outline"
+              borderColor="#6A47CF"
+              color="gray.800"
+              size="md"
+              fontWeight="xs"
+              height="40px"
+              fontFamily="Poppins"
+              fontSize="sm"
+              borderRadius="full"
+              _hover={{ bg: '#F3F0FA' }}
+              onClick={handleFileButtonClick}
+            >
+              Change file
+            </Button>
+          </VStack>
+        ) : (
+          <Button
+            variant="outline"
+            borderColor="#6A47CF"
+            color="gray.800"
+            size="md"
+            fontWeight="xs"
+            height="40px"
+            maxW="380px"
+            fontFamily="Poppins"
+            fontSize="sm"
+            borderRadius="full"
+            _hover={{ bg: '#F3F0FA' }}
+            alignSelf="flex-start"
+            mb={4}
+            onClick={handleFileButtonClick}
+            isTruncated
+          >
+            Select file
+          </Button>
+        )}
 
         {/* Continue Button */}
         <Button
-          bg="#B8FF8D"
+          bg={config.primaryColor}
           color="black"
           size="lg"
           height="50px"
           w="full"
           fontFamily="Poppins"
           borderRadius="full"
-          _hover={{ bg: '#a5e67f' }}
+          _hover={{ bg: `${config.primaryColor}CC` }}
+          onClick={handleContinue}
+          isLoading={uploading}
+          loadingText="Uploading..."
+          disabled={uploading}
         >
           Continue
           <Icon as={ArrowRightIcon} w={5} h={5} ml={2} />

@@ -15,7 +15,7 @@ import {
   Alert,
   AlertIcon,
 } from '@chakra-ui/react';
-import { ChevronDown, Search, Check } from 'lucide-react';
+import { ChevronDown, Search, Check, FileIcon} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../Common/Header';
 import { ClaimUpTo } from '../Common/Claimupto';
@@ -167,8 +167,29 @@ const MissingAgreements: React.FC = () => {
           {existingClaims.length > 0 && (
             <>
               {existingClaims.map((claim) => (
-                <Box key={claim.id} border="1.5px solid #E2E8F0" fontWeight="bold" p={3} fontSize="sm" borderRadius="md">
-                  {claim.lender_name}
+                <Box 
+                  key={claim.id} 
+                  border="1.5px solid #E2E8F0" 
+                  bg="white"
+                  p={4} 
+                  fontSize="sm" 
+                  borderRadius="lg"
+                  boxShadow="sm"
+                  transition="all 0.2s"
+                  _hover={{ borderColor: config.accentColor, transform: "translateY(-1px)" }}
+                >
+                  <Flex align="center">
+                    <Icon 
+                      as={FileIcon} 
+                      w={4} 
+                      h={4} 
+                      mr={3} 
+                      color={config.accentColor} 
+                    />
+                    <Text fontFamily="Poppins" fontWeight="bold">
+                      {claim.lender_name}
+                    </Text>
+                  </Flex>
                 </Box>
               ))}
             </>

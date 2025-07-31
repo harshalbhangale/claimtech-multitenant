@@ -7,7 +7,7 @@ const Profile = () => {
   const { config } = useTenant();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading] = useState(false);
   const toast = useToast();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,33 +43,6 @@ const Profile = () => {
     setSelectedFile(file);
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-
-    setIsUploading(true);
-    try {
-      // TODO: Implement actual file upload to backend
-      // For now, simulate upload with timeout
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast({
-        title: "Document uploaded successfully",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: "Please try again later",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   return (
     <Box p={8} maxW="2xl" mx="auto">
@@ -353,9 +326,9 @@ const Profile = () => {
               _hover={{ bg: `${config.primaryColor}80` }}
               fontFamily="Poppins"
               fontWeight="semibold"
-              onClick={handleUpload}
               isLoading={isUploading}
               loadingText="Uploading..."
+              onClick={() => window.location.href = '/dashboard/documentupload'}
             >
               Upload Document
               <Icon as={CheckIcon} w={4} h={4} ml={1} strokeWidth={3}/>
