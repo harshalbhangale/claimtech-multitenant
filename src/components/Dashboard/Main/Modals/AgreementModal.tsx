@@ -39,19 +39,6 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
   const [formData, setFormData] = useState<AgreementDetailsRequest>({
     agreement_number: '',
     vehicle_registration: '',
-    vehicle_make: '',
-    vehicle_model: '',
-    loan_amount: undefined,
-    annual_percentage_rate: undefined,
-    flat_interest_rate: undefined,
-    monthly_payment: undefined,
-    interest_payable: undefined,
-    total_cost_of_credit: undefined,
-    balloon_payment: undefined,
-    contract_ongoing: false,
-    start_date: '',
-    contract_length: undefined,
-    dealership_name: '',
   });
 
   const handleInputChange = (field: keyof AgreementDetailsRequest, value: any) => {
