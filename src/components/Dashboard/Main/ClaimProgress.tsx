@@ -29,7 +29,13 @@ const ClaimProgress: React.FC<ClaimProgressProps> = ({ currentStep }) => {
             <VStack key={step} spacing={2} flex={1} align="center">
               <Box w="full" h="6px" bg={color} borderRadius="full" />
               <VStack spacing={1} align="center">
-                <Text fontSize="xs" textAlign="center" color={textColor} fontWeight={isActive ? 'bold' : 'normal'}>
+                <Text 
+                  fontSize={{ base: "2xs", md: "xs" }} 
+                  textAlign="center" 
+                  color={textColor} 
+                  fontWeight={isActive ? 'bold' : 'normal'}
+                  lineHeight="1.2"
+                >
                   {label}
                 </Text>
               </VStack>

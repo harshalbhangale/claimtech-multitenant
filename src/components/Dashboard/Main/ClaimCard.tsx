@@ -14,7 +14,8 @@ import ClaimProgress from './ClaimProgress';
 import { ArrowRightIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import Button from '../../Onboarding/Common/CustomButton';
 import { useTenant } from '../../../contexts/TenantContext';
-import { AgreementDetailsModal } from './AgreementModal';
+import { AgreementDetailsModal } from './Modals/AgreementModal';
+import AdditionalInfoModal from './Modals/AdditionalInfoModal';
 
 interface ClaimCardProps {
   lender: string;
@@ -28,10 +29,15 @@ interface ClaimCardProps {
 const ClaimCard: React.FC<ClaimCardProps> = ({ lender, stage,  onProvideDetails, id }) => {
   const { config } = useTenant();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAdditionalInfoModalOpen, setIsAdditionalInfoModalOpen] = useState(false);
 
   const handleProvideDetails = () => {
     setIsModalOpen(true);
     onProvideDetails();
+  };
+
+  const handleProvideAdditionalInfo = () => {
+    setIsAdditionalInfoModalOpen(true);
   };
 
   return (
@@ -69,10 +75,10 @@ const ClaimCard: React.FC<ClaimCardProps> = ({ lender, stage,  onProvideDetails,
           </Text>
         </HStack>
 
-        <ClaimProgress currentStep={1} />
+        <ClaimProgress currentStep={1}/>
         <Box h={4} />
 
-        <VStack spacing={6} align="stretch">
+        <VStack spacing={6} align="stretch" mt={4}>
 
           {/* Provide Details */}
           <Box>
@@ -90,12 +96,43 @@ const ClaimCard: React.FC<ClaimCardProps> = ({ lender, stage,  onProvideDetails,
               <ArrowRightIcon width={14} height={14} strokeWidth={3} />
             </Button>
           </Box>
+
+          <Box>
+            <HStack mb={3}>
+              <Circle size="24px" bg={config.accentLightColor} color={config.accentColor}>
+                <ExclamationCircleIcon width={14} height={14} strokeWidth={2} />
+              </Circle>
+              <Box>
+                <Text fontWeight="bold" fontSize="sm">Additional information required</Text>
+                <Text fontSize="sm">Please provide the requested details</Text>
+              </Box>
+            </HStack>
+            <Button
+              w="full"
+              color="black"
+              _hover={{ bg: `${config.primaryColor}80` }}
+              borderRadius="full"
+              gap={1}
+              height="48px"
+              fontFamily="Poppins"
+              onClick={handleProvideAdditionalInfo}
+            >
+              Urgent Requirements
+              <ArrowRightIcon width={14} height={14} strokeWidth={3} />
+            </Button>
+          </Box>
         </VStack>
       </Box>
 
       <AgreementDetailsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        claimId={id}
+      />
+      
+      <AdditionalInfoModal
+        isOpen={isAdditionalInfoModalOpen}
+        onClose={() => setIsAdditionalInfoModalOpen(false)}
         claimId={id}
       />
     </>

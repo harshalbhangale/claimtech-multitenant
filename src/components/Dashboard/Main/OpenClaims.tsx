@@ -30,44 +30,55 @@ const OpenClaims: React.FC = () => {
     fetchClaims();
   }, []);
   return (
-    <VStack spacing={4} align="stretch">
+    <VStack spacing={{ base: 3, md: 4 }} align="stretch">
       <Text
-        fontSize="xl"
+        fontSize={{ base: "lg", md: "xl" }}
         fontWeight="bold"
         fontFamily="Poppins"
-        pt={4}
+        pt={{ base: 3, md: 4 }}
         pb={2}
       >
         My open claims
       </Text>
       <HStack 
         bg={config.accentLightColor}
-        borderRadius="md" 
-        p={4} 
-        spacing={3} 
-        fontSize="sm" 
+        borderRadius={{ base: "md", md: "md" }} 
+        p={{ base: 3, md: 4 }} 
+        spacing={{ base: 2, md: 3 }} 
+        fontSize={{ base: "xs", md: "sm" }} 
         border="1px solid #DED6F5"
+        align="start"
       >
-        <Icon as={ExclamationCircleIcon} w={5} h={5} color={config.accentColor} />
+        <Icon 
+          as={ExclamationCircleIcon} 
+          w={{ base: 4, md: 5 }} 
+          h={{ base: 4, md: 5 }} 
+          color={config.accentColor} 
+          flexShrink={0}
+          mt={0.5}
+        />
         <Text 
           fontFamily="Poppins" 
           fontWeight="medium" 
           color="#1A1A1A"
           lineHeight="1.5"
+          fontSize={{ base: "xs", md: "sm" }}
         >
           We're currently searching your credit file for finance agreements between 2007 and 2019, which will be available within 2 days. We'll send you a text if we find any!
         </Text>
       </HStack>
 
-      {loading && <Spinner />}
+      {loading && <Spinner size={{ base: "md", md: "lg" }} />}
       {error && (
-        <Alert status="error">
+        <Alert status="error" borderRadius={{ base: "md", md: "md" }} fontSize={{ base: "sm", md: "md" }}>
           <AlertIcon />
           {error}
         </Alert>
       )}
       {!loading && !error && claims.length === 0 && (
-        <Text color="gray.500" fontFamily="Poppins">No open claims found.</Text>
+        <Text color="gray.500" fontFamily="Poppins" fontSize={{ base: "sm", md: "md" }} textAlign="center" py={{ base: 4, md: 6 }}>
+          No open claims found.
+        </Text>
       )}
       {claims.map((claim) => (
         <ClaimCard
