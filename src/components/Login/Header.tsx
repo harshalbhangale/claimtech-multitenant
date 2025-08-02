@@ -1,12 +1,13 @@
+// src/components/Login/Header.tsx
 import React from 'react';
 import { Flex, Image, Box } from '@chakra-ui/react';
-import { useTenant } from '../../../contexts/TenantContext';
+import { useTenant } from '../../contexts/TenantContext';
 
 export const Header: React.FC = () => {
   const { config } = useTenant();
 
   return (
-    <Box textAlign="center" py={1} mb={2}>
+    <Box bg="white" py={{ base: 3, md: 3 }} px={{ base: 4, md: 8 }} borderBottom='1px solid #E2E8F0'>
       <Flex 
         maxW="3xl"
         mx="auto"
@@ -14,6 +15,7 @@ export const Header: React.FC = () => {
         justify="space-between" 
         align="center"
       >
+        {/* Logo */}
         <Image 
           src={config.logo} 
           alt={config.name}
@@ -21,6 +23,8 @@ export const Header: React.FC = () => {
           objectFit="contain"
           maxW={{ base: "200px", md: "auto" }}
         />
+        
+        {/* Secured Badge */}
         <Image 
           src={config.secured} 
           alt="Website Secured"
@@ -31,4 +35,4 @@ export const Header: React.FC = () => {
       </Flex>
     </Box>
   );
-}; 
+};

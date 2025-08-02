@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import {
   Box,
-
   Heading,
   Text,
   Badge,
   VStack,
   HStack,
   Circle,
-
 } from '@chakra-ui/react';
 import ClaimProgress from './ClaimProgress';
 import { ArrowRightIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';

@@ -22,7 +22,7 @@ import {
   Input,
   HStack,
 } from '@chakra-ui/react';
-import { X, Plus, ChevronDown } from 'lucide-react';
+import { Plus, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../Common/Header';
 import { Footer } from '../Common/Footer';
@@ -263,36 +263,36 @@ export const PreviousAddressesPage: React.FC = () => {
   };
 
   // Remove address from list
-  const removeAddress = (addressId: string) => {
-    console.log('Removing address:', addressId);
+  // const removeAddress = (addressId: string) => {
+  //   console.log('Removing address:', addressId);
     
-    // Update addresses state
-    const updatedAddresses = addresses.filter(addr => addr.address_id !== addressId);
-    setAddresses(updatedAddresses);
+  //   // Update addresses state
+  //   const updatedAddresses = addresses.filter(addr => addr.address_id !== addressId);
+  //   setAddresses(updatedAddresses);
     
-    // Update removed IDs state
-    const updatedRemovedIds = [...removedAddressIds, addressId];
-    setRemovedAddressIds(updatedRemovedIds);
+  //   // Update removed IDs state
+  //   const updatedRemovedIds = [...removedAddressIds, addressId];
+  //   setRemovedAddressIds(updatedRemovedIds);
     
-    // Update added addresses state (remove from added if it was added)
-    const updatedAddedAddresses = addedAddresses.filter(addr => addr.address_id !== addressId);
-    setAddedAddresses(updatedAddedAddresses);
+  //   // Update added addresses state (remove from added if it was added)
+  //   const updatedAddedAddresses = addedAddresses.filter(addr => addr.address_id !== addressId);
+  //   setAddedAddresses(updatedAddedAddresses);
     
-    // Save to localStorage
-    saveStateToStorage({
-      addresses: updatedAddresses,
-      removedAddressIds: updatedRemovedIds,
-      addedAddresses: updatedAddedAddresses
-    });
+  //   // Save to localStorage
+  //   saveStateToStorage({
+  //     addresses: updatedAddresses,
+  //     removedAddressIds: updatedRemovedIds,
+  //     addedAddresses: updatedAddedAddresses
+  //   });
     
-    toast({
-      title: "Address Removed",
-      description: "Address has been removed from your list.",
-      status: "info",
-      duration: 2000,
-      isClosable: true,
-    });
-  };
+  //   toast({
+  //     title: "Address Removed",
+  //     description: "Address has been removed from your list.",
+  //     status: "info",
+  //     duration: 2000,
+  //     isClosable: true,
+  //   });
+  // };
 
   // Modal functions for adding addresses
   const validPostcode = (pc: string): boolean => {
@@ -494,32 +494,49 @@ export const PreviousAddressesPage: React.FC = () => {
       
       // Call invite API to send OTP
       console.log('Calling invite API...');
-      const inviteResponse = await inviteUser();
-      console.log('Invite response:', inviteResponse);
+      try {
+        const inviteResponse = await inviteUser();
+        console.log('Invite response:', inviteResponse);
 
-      // Store OTP reference for verification
-      if (inviteResponse.invite_response?.Info?.Data?.reference) {
-        const reference = inviteResponse.invite_response.Info.Data.reference;
-        storeOtpReference(reference);
-        console.log('OTP reference stored:', reference);
+        // Store OTP reference for verification
+        if (inviteResponse.invite_response?.Info?.Data?.reference) {
+          const reference = inviteResponse.invite_response.Info.Data.reference;
+          storeOtpReference(reference);
+          console.log('OTP reference stored:', reference);
+        }
         
-        // Clear the saved state since we're moving to the next step
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
+      } catch (inviteError: any) {
+        console.log('Invite API error:', inviteError);
         
-        toast({
-          title: "Processing Complete",
-          description: "Please check your phone for the verification code.",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
-
-        // Navigate to OTP verification page
-        navigate('/auth/otpverify');
-      } else {
-        console.error('No OTP reference found in invite response:', inviteResponse);
-        throw new Error('No OTP reference received from invite request');
+        // Handle 409 Conflict error - bypass and continue to OTP verification
+        if (inviteError.response?.status === 409) {
+          console.log('409 Conflict detected - bypassing invite API and proceeding to OTP verification');
+          toast({
+            title: "Proceeding to Verification",
+            description: "Moving to OTP verification step.",
+            status: "info",
+            duration: 2000,
+            isClosable: true,
+          });
+        } else {
+          // Re-throw other errors that aren't 409
+          throw inviteError;
+        }
       }
+      
+      // Clear the saved state since we're moving to the next step
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      
+      toast({
+        title: "Processing Complete",
+        description: "Please check your phone for the verification code.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+
+      // Navigate to OTP verification page
+      navigate('/auth/otpverify');
       
     } catch (error: any) {
       console.error('Error in next step:', error);
@@ -583,10 +600,10 @@ export const PreviousAddressesPage: React.FC = () => {
               mb={3}
               color="gray.900"
             >
-              Review your previous addresses
+              We’re finding your linked addresses. 
             </Text>
             <Text color="gray.600" mb={4} fontSize={{ base: "sm", md: "md" }}>
-              We found these addresses associated with your details. Remove any that don't belong to you or add additional previous addresses.
+              Please add any addresses that are missing, the more correct addresses we have the more likley we are to find ALL your agreements.
             </Text>
 
             {/* Add Address Button */}
@@ -697,7 +714,7 @@ export const PreviousAddressesPage: React.FC = () => {
                         </Box>
 
                         {/* Remove Button */}
-                        <Button
+                        {/* <Button
                           size="sm"
                           variant="ghost"
                           colorScheme="red"
@@ -709,7 +726,7 @@ export const PreviousAddressesPage: React.FC = () => {
                           _hover={{ bg: 'red.50' }}
                         >
                           <Icon as={X} w={4} h={4} />
-                        </Button>
+                        </Button> */}
                       </Flex>
                     </Box>
                   );
@@ -791,7 +808,7 @@ export const PreviousAddressesPage: React.FC = () => {
                   onClick={handleModalFind}
                   bg={config.primaryColor}
                   color="black"
-                  _hover={{ bg: config.accentColor }}
+                  _hover={{ bg: `${config.primaryColor}CC` }}
                   fontWeight="medium"
                   isLoading={modalLoading}
                   loadingText="Finding..."

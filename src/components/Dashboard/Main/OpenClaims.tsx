@@ -6,7 +6,7 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { useState, useEffect } from 'react';
 import { getClaims } from '../../../api/services/dashboard/getClaims';
 import type { Claim } from '../../../api/services/dashboard/getClaims';
-import { Spinner, Alert, AlertIcon } from '@chakra-ui/react';
+import { Spinner, Alert, AlertIcon, Button } from '@chakra-ui/react';
 
 const OpenClaims: React.FC = () => {
   const { config } = useTenant();
@@ -19,9 +19,13 @@ const OpenClaims: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        console.log('🔍 Dashboard: Fetching claims...');
         const data = await getClaims();
+        console.log('📊 Dashboard: Claims received:', data);
+        console.log('📊 Dashboard: Number of claims:', data?.length || 0);
         setClaims(data);
       } catch (err) {
+        console.error('❌ Dashboard: Failed to load claims:', err);
         setError('Failed to load claims.');
       } finally {
         setLoading(false);
@@ -31,15 +35,25 @@ const OpenClaims: React.FC = () => {
   }, []);
   return (
     <VStack spacing={{ base: 3, md: 4 }} align="stretch">
-      <Text
-        fontSize={{ base: "lg", md: "xl" }}
-        fontWeight="bold"
-        fontFamily="Poppins"
-        pt={{ base: 3, md: 4 }}
-        pb={2}
-      >
-        My open claims
-      </Text>
+      <HStack justify="space-between" align="center">
+        <Text
+          fontSize={{ base: "lg", md: "xl" }}
+          fontWeight="bold"
+          fontFamily="Poppins"
+          pt={{ base: 3, md: 4 }}
+          pb={2}
+        >
+          My open claims
+        </Text>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => window.location.reload()}
+          colorScheme="blue"
+        >
+          Refresh
+        </Button>
+      </HStack>
       <HStack 
         bg={config.accentLightColor}
         borderRadius={{ base: "md", md: "md" }} 
@@ -86,7 +100,7 @@ const OpenClaims: React.FC = () => {
           id={claim.id}
           lender={claim.lender_name}
           stage={claim.status}
-          progress={25} // You can adjust this if you have a real progress value
+          progress={25}
           onUploadId={() => {}}
           onProvideDetails={() => {}}
         />
@@ -96,4 +110,4 @@ const OpenClaims: React.FC = () => {
 };
 
 export default OpenClaims;
-export { OpenClaims }; 
+export { OpenClaims };

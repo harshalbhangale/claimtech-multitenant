@@ -1,12 +1,7 @@
-import { Container,Heading } from "@chakra-ui/react";
+import { LoginPage } from '../../components/Login/Login';
 
-// write welcome to login page
 const Login = () => {
-  return (
-    <Container>
-      <Heading>Welcome to Login</Heading>
-    </Container>
-  );
+  return <LoginPage />;
 };
 
 export default Login;

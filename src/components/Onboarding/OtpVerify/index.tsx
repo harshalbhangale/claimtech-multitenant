@@ -39,22 +39,15 @@ const OtpVerify: React.FC = () => {
     if (reference) {
       setOtpReference(reference);
     } else {
-      // ✅ Give user time to see the page before redirecting
-      setError('No OTP reference found. Redirecting to signature step...');
-      setTimeout(() => {
-        navigate('/auth/signature');
-      }, 3000); // 3 second delay
-      setIsLoading(false);
+      // Allow user to proceed without OTP reference
+      console.log('No OTP reference found, but allowing user to continue with manual OTP entry');
+      setOtpReference(null);
     }
+    setIsLoading(false);
   }, [navigate]);
 
   // Fixed handleVerify function in OtpVerify component
   const handleVerify = async () => {
-    if (!otpReference) {
-      setError('No OTP reference found. Please restart the process.');
-      return;
-    }
-
     if (!code.trim()) {
       setError('Please enter the verification code.');
       return;
@@ -65,33 +58,55 @@ const OtpVerify: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await verifyOtp(otpReference, code.trim());
-      
-      console.log('OTP Response:', response);
-      
-      // 🔥 FIX: Check if response exists (successful verification)
-      // The API returns the data directly when successful
-      if (response && (response.extracted_hp_agreements !== undefined || response.agreements_count !== undefined)) {
-        setSuccess('Verification successful! Redirecting...');
+      // If we have an OTP reference, try to verify with the API
+      if (otpReference) {
+        const response = await verifyOtp(otpReference, code.trim());
         
-        // Store the verification results if needed
-        console.log('Found agreements:', response.agreements_count);
-        console.log('HP Agreements:', response.extracted_hp_agreements);
+        console.log('OTP Response:', response);
         
-        // Clear the OTP reference after successful verification
-        clearOtpReference();
+        // Check if response exists (successful verification)
+        if (response && (response.extracted_hp_agreements !== undefined || response.agreements_count !== undefined)) {
+          setSuccess('Verification successful! Redirecting...');
+          
+          // Store the verification results if needed
+          console.log('Found agreements:', response.agreements_count);
+          console.log('HP Agreements:', response.extracted_hp_agreements);
+          
+          // Clear the OTP reference after successful verification
+          clearOtpReference();
+          
+          // Navigate to next step after verification
+          setTimeout(() => {
+            navigate('/auth/missingagreements');
+          }, 1500);
+        } else {
+          setError('Verification failed. Please try again.');
+        }
+      } else {
+        // No OTP reference - bypass verification and proceed directly
+        console.log('No OTP reference found, bypassing verification and proceeding to missing lenders');
+        setSuccess('Proceeding to next step...');
         
-        // Navigate to next step after verification
+        // Navigate to missing lenders page after a brief delay
         setTimeout(() => {
           navigate('/auth/missingagreements');
         }, 1500);
-      } else {
-        setError('Verification failed. Please try again.');
       }
     } catch (error: any) {
       console.error('OTP verification error:', error);
       
-      // Handle different error responses
+      // If we don't have an OTP reference, bypass the error and proceed
+      if (!otpReference) {
+        console.log('No OTP reference - bypassing error and proceeding to missing lenders');
+        setSuccess('Proceeding to next step...');
+        
+        setTimeout(() => {
+          navigate('/auth/missingagreements');
+        }, 1500);
+        return;
+      }
+      
+      // Handle different error responses for normal OTP verification
       if (error.response?.status === 400) {
         setError('Invalid or expired verification code. Please check and try again.');
       } else if (error.response?.status === 429) {
@@ -106,7 +121,7 @@ const OtpVerify: React.FC = () => {
 
   const handleResend = async () => {
     if (!otpReference) {
-      setError('No OTP reference found. Please restart the process.');
+      setError('No verification reference available. You can still enter any code to proceed.');
       return;
     }
 
@@ -170,6 +185,13 @@ const OtpVerify: React.FC = () => {
             <Text fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" mb={2}>
               Check your messages now!
             </Text>
+
+            {!otpReference && !error && !success && (
+              <Alert status="info" mb={4} borderRadius="md">
+                <AlertIcon />
+                No verification reference found. You can enter any code to proceed to the next step.
+              </Alert>
+            )}
 
             {error && (
               <Alert status="error" mb={4} borderRadius="md">

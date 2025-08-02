@@ -8,6 +8,7 @@ import {
   Button,
   HStack,
   Flex,
+  Spinner,
 } from '@chakra-ui/react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +23,7 @@ import { saveSelectedAddress, getSelectedAddress } from '../../../utils/addressS
 import type { RawAddress, FormattedAddress } from '../../../types/address';
 import NextButton from '../Common/NextButton';
 
+
 const AddressSearch: React.FC = () => {
   const navigate = useNavigate();
   const { config } = useTenant();
@@ -30,6 +32,7 @@ const AddressSearch: React.FC = () => {
   const [rawAddresses, setRawAddresses] = useState<RawAddress[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [loading, setLoading] = useState(false); // Loader state for Find button
 
   // Load previously selected address on component mount
   useEffect(() => {
@@ -63,31 +66,36 @@ const AddressSearch: React.FC = () => {
       return;
     }
 
+    setLoading(true);
     const getAddresses = async () => {
-      const rawResults = await fetchAddressesByPostcode(pc);
-      const formatted = rawResults.map((item, idx) => {
-        const parts = [
-          item.address1,
-          item.address2,
-          item.address3,
-          item.address4,
-          item.address5,
-          item.city,
-          item.region,
-          item.postcode,
-        ].filter(Boolean);
+      try {
+        const rawResults = await fetchAddressesByPostcode(pc);
+        const formatted = rawResults.map((item, idx) => {
+          const parts = [
+            item.address1,
+            item.address2,
+            item.address3,
+            item.address4,
+            item.address5,
+            item.city,
+            item.region,
+            item.postcode,
+          ].filter(Boolean);
 
-        return {
-          id: idx,
-          label: parts.join(', '),
-          lines: parts.join('\n'),
-          address_id: item.address_id,
-        };
-      });
+          return {
+            id: idx,
+            label: parts.join(', '),
+            lines: parts.join('\n'),
+            address_id: item.address_id,
+          };
+        });
 
-      setAddresses(formatted);
-      setRawAddresses(rawResults);
-      setSelectedId(null);
+        setAddresses(formatted);
+        setRawAddresses(rawResults);
+        setSelectedId(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
     getAddresses();
@@ -151,7 +159,14 @@ const AddressSearch: React.FC = () => {
                 _hover={{ bg: `${config.primaryColor}CC` }}
                 onClick={handleFind}
                 fontWeight="medium"
-                rightIcon={<Text as="span" ml={1}>→</Text>}
+                rightIcon={
+                  loading ? (
+                    <Spinner size="sm" color="black" />
+                  ) : (
+                    <Text as="span" ml={1}>→</Text>
+                  )
+                }
+                isDisabled={loading}
               >
                 Find
               </Button>
