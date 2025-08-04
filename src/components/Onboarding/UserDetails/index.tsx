@@ -20,6 +20,36 @@ import Trustpilot from '../Common/Trustpilot';
 import { saveUserDetails, getUserDetails, getLenderSelection } from '../../../utils/onboardingStorage';
 import { useAutoSave } from '../../../hooks/useAutoSave';
 
+function isValidDate(day: string, month: string, year: string) {
+  if (!day || !month || !year) return false;
+  const d = parseInt(day, 10);
+  const m = parseInt(month, 10);
+  const y = parseInt(year, 10);
+  if (isNaN(d) || isNaN(m) || isNaN(y)) return false;
+  if (y < 1900 || y > 2100) return false;
+  if (m < 1 || m > 12) return false;
+  if (d < 1 || d > 31) return false;
+  // Check for valid day in month
+  const date = new Date(y, m - 1, d);
+  return (
+    date.getFullYear() === y &&
+    date.getMonth() === m - 1 &&
+    date.getDate() === d
+  );
+}
+
+function isAtLeast18YearsOld(day: string, month: string, year: string) {
+  if (!isValidDate(day, month, year)) return false;
+  const dob = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+  const today = new Date();
+  const eighteen = new Date(
+    today.getFullYear() - 18,
+    today.getMonth(),
+    today.getDate()
+  );
+  return dob <= eighteen;
+}
+
 export const UserDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { config } = useTenant();
@@ -27,6 +57,9 @@ export const UserDetailsPage: React.FC = () => {
   const [lastName, setLastName] = useState('');
   const [dob, setDob] = useState({ day: '', month: '', year: '' });
   const [selectedLendersCount, setSelectedLendersCount] = useState(0);
+
+  // Validation state
+  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; dob?: string }>({});
 
   // Load saved user details and lender selection on component mount
   useEffect(() => {
@@ -59,14 +92,36 @@ export const UserDetailsPage: React.FC = () => {
     2000 // Save after 2 seconds of inactivity
   );
 
+  const validate = () => {
+    const newErrors: { firstName?: string; lastName?: string; dob?: string } = {};
+    if (!firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+    }
+    if (!dob.day || !dob.month || !dob.year) {
+      newErrors.dob = 'Date of birth is required';
+    } else if (!isValidDate(dob.day, dob.month, dob.year)) {
+      newErrors.dob = 'Please enter a valid date of birth';
+    } else if (!isAtLeast18YearsOld(dob.day, dob.month, dob.year)) {
+      newErrors.dob = 'You must be at least 18 years old';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleNextStep = () => {
+    if (!validate()) {
+      return;
+    }
     // Save user details to localStorage
     saveUserDetails({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       dob
     });
-    
+
     navigate('/auth/addresssearch');
   };
 
@@ -124,47 +179,69 @@ export const UserDetailsPage: React.FC = () => {
             </Text>
 
             <VStack spacing={5} align="stretch" mb={6}>
-              <Input
-                placeholder="First name"
-                size="lg"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                bg="white"
-                border="1px solid"
-                borderColor="gray.300"
-                borderRadius="md"
-                _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
-                height="56px"
-              />
+              <Box>
+                <Input
+                  placeholder="First name"
+                  size="lg"
+                  value={firstName}
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    if (errors.firstName) setErrors({ ...errors, firstName: undefined });
+                  }}
+                  bg="white"
+                  border="1px solid"
+                  borderColor={errors.firstName ? "red.400" : "gray.300"}
+                  borderRadius="md"
+                  _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
+                  height="56px"
+                  aria-invalid={!!errors.firstName}
+                />
+                {errors.firstName && (
+                  <Text color="red.500" fontSize="sm" mt={1}>
+                    {errors.firstName}
+                  </Text>
+                )}
+              </Box>
 
-              <Input
-                placeholder="Last name"
-                size="lg"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                bg="white"
-                border="1px solid"
-                borderColor="gray.300"
-                borderRadius="md"
-                _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
-                height="56px"
-              />
+              <Box>
+                <Input
+                  placeholder="Last name"
+                  size="lg"
+                  value={lastName}
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    if (errors.lastName) setErrors({ ...errors, lastName: undefined });
+                  }}
+                  bg="white"
+                  border="1px solid"
+                  borderColor={errors.lastName ? "red.400" : "gray.300"}
+                  borderRadius="md"
+                  _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
+                  height="56px"
+                  aria-invalid={!!errors.lastName}
+                />
+                {errors.lastName && (
+                  <Text color="red.500" fontSize="sm" mt={1}>
+                    {errors.lastName}
+                  </Text>
+                )}
+              </Box>
 
               <Box>
                 <HStack spacing={2} mb={2} align="center">
-                <Box as="svg" 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    strokeWidth={1.5} 
+                  <Box as="svg"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
                     stroke="currentColor"
                     w="16px"
                     h="16px"
                   >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" 
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
                     />
                   </Box>
                   <Text fontSize="sm" fontWeight="bold" color="gray.700">
@@ -180,10 +257,11 @@ export const UserDetailsPage: React.FC = () => {
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, '').slice(0, 2);
                       setDob({ ...dob, day: value });
+                      if (errors.dob) setErrors({ ...errors, dob: undefined });
                     }}
                     bg="white"
                     border="1px solid"
-                    borderColor="gray.300"
+                    borderColor={errors.dob ? "red.400" : "gray.300"}
                     borderRadius="xl"
                     _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
                     height="56px"
@@ -194,6 +272,7 @@ export const UserDetailsPage: React.FC = () => {
                     _placeholder={{ color: "gray.400", fontSize: "lg" }}
                     maxLength={2}
                     inputMode="numeric"
+                    aria-invalid={!!errors.dob}
                   />
                   <Input
                     placeholder="MM"
@@ -203,10 +282,11 @@ export const UserDetailsPage: React.FC = () => {
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, '').slice(0, 2);
                       setDob({ ...dob, month: value });
+                      if (errors.dob) setErrors({ ...errors, dob: undefined });
                     }}
                     bg="white"
                     border="1px solid"
-                    borderColor="gray.300"
+                    borderColor={errors.dob ? "red.400" : "gray.300"}
                     borderRadius="xl"
                     _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
                     height="56px"
@@ -217,6 +297,7 @@ export const UserDetailsPage: React.FC = () => {
                     _placeholder={{ color: "gray.400", fontSize: "lg" }}
                     maxLength={2}
                     inputMode="numeric"
+                    aria-invalid={!!errors.dob}
                   />
                   <Input
                     placeholder="YYYY"
@@ -226,10 +307,11 @@ export const UserDetailsPage: React.FC = () => {
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, '').slice(0, 4);
                       setDob({ ...dob, year: value });
+                      if (errors.dob) setErrors({ ...errors, dob: undefined });
                     }}
                     bg="white"
                     border="1px solid"
-                    borderColor="gray.300"
+                    borderColor={errors.dob ? "red.400" : "gray.300"}
                     borderRadius="xl"
                     _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
                     height="56px"
@@ -240,8 +322,14 @@ export const UserDetailsPage: React.FC = () => {
                     _placeholder={{ color: "gray.400", fontSize: "lg" }}
                     maxLength={4}
                     inputMode="numeric"
+                    aria-invalid={!!errors.dob}
                   />
                 </HStack>
+                {errors.dob && (
+                  <Text color="red.500" fontSize="sm" mt={1}>
+                    {errors.dob}
+                  </Text>
+                )}
               </Box>
             </VStack>
 

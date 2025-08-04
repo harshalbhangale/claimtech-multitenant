@@ -41,7 +41,7 @@ const SignatureStep: React.FC = () => {
   const updateCanvasDimensions = () => {
     if (canvasContainerRef.current) {
       const containerWidth = canvasContainerRef.current.offsetWidth;
-      const aspectRatio = 4; // 800/200 = 4:1 ratio
+      const aspectRatio = 4; 
       const height = Math.max(150, Math.min(200, containerWidth / aspectRatio));
       const width = containerWidth;
       
@@ -222,7 +222,7 @@ const SignatureStep: React.FC = () => {
           {/* Main Card */}
           <Box border="1.5px solid #E2E8F0" borderRadius="2xl" p={6} w="full">
             <Text fontSize={{ base: 'xl', md: '3xl' }} fontWeight="bold" mb={2} color="gray.900" fontFamily="Poppins">
-              Great news, Harshal!
+              Great news, !
             </Text>
             <Flex align="center" mb={4} flexWrap="wrap" gap={1}>
               <Text fontSize={{ base: 'sm', md: 'md' }} color="gray.900" fontWeight="bold" fontFamily="Poppins">
@@ -274,7 +274,7 @@ const SignatureStep: React.FC = () => {
                       width: `${canvasDimensions.width}px`,
                       height: `${canvasDimensions.height}px`,
                       display: 'block',
-                      touchAction: 'none', // Prevents scrolling on mobile
+                      touchAction: 'none',
                     },
                   }}
                 />
