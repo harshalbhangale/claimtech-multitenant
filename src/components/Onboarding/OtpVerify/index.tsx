@@ -6,14 +6,15 @@ import {
   Text,
   Input,
   Button,
-  Alert,
-  AlertIcon,
   Spinner,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../Common/Header';
 import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
+import SuccessMessage from '../Common/SuccessMessage';
+
+import ErrorMessage from '../Common/ErrorMessage';
 import { 
   verifyOtp, 
   resendOtp, 
@@ -186,27 +187,6 @@ const OtpVerify: React.FC = () => {
               Check your messages now!
             </Text>
 
-            {!otpReference && !error && !success && (
-              <Alert status="info" mb={4} borderRadius="md">
-                <AlertIcon />
-                No verification reference found. You can enter any code to proceed to the next step.
-              </Alert>
-            )}
-
-            {error && (
-              <Alert status="error" mb={4} borderRadius="md">
-                <AlertIcon />
-                {error}
-              </Alert>
-            )}
-
-            {success && (
-              <Alert status="success" mb={4} borderRadius="md">
-                <AlertIcon />
-                {success}
-              </Alert>
-            )}
-
             <Text fontSize="sm" fontWeight="bold" mb={2}>
               Enter verification code
             </Text>
@@ -231,6 +211,10 @@ const OtpVerify: React.FC = () => {
               disabled={isVerifying || isResending}
             />
 
+
+            {error && <ErrorMessage message={error} />}
+
+            {success && <SuccessMessage message={success} />}
             <Button
               w="full"
               bg={config.primaryColor}

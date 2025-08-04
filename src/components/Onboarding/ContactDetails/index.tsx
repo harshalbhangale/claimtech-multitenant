@@ -11,7 +11,6 @@ import {
   Link,
   FormControl,
   FormErrorMessage,
-  useToast,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../Common/Header';
@@ -21,19 +20,23 @@ import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import NextButton from '../../Onboarding/Common/NextButton';
 import Trustpilot from '../Common/Trustpilot';
+import SuccessMessage from '../Common/SuccessMessage';
+import ErrorMessage from '../Common/ErrorMessage';
 import { saveContactDetails, getContactDetails } from '../../../utils/onboardingStorage';
 import { useAutoSave } from '../../../hooks/useAutoSave';
 import { registerUser } from '../../../api/services/onboarding/registerUser';
 import { transformOnboardingDataForRegistration } from '../../../utils/transformOnboardingData';
 
+
 const ContactDetails: React.FC = () => {
   const navigate = useNavigate();
   const { config } = useTenant();
-  const toast = useToast();
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState({ mobile: false, email: false });
   const [isRegistering, setIsRegistering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   // Load saved contact details on component mount
   useEffect(() => {
@@ -77,6 +80,10 @@ const ContactDetails: React.FC = () => {
   const emailError = touched.email ? validateEmail(email) : '';
 
   const handleNext = async () => {
+    // Clear any previous errors and success messages
+    setError(null);
+    setSuccess(null);
+    
     // Mark all fields as touched to show validation errors
     setTouched({ mobile: true, email: true });
     
@@ -95,31 +102,22 @@ const ContactDetails: React.FC = () => {
         const registrationData = transformOnboardingDataForRegistration();
         
         if (!registrationData) {
-          toast({
-            title: "Missing Information",
-            description: "Please complete all previous steps before continuing.",
-            status: "error",
-            duration: 5000,
-            isClosable: true,
-          });
+          setError("Please complete all previous steps before continuing.");
           return;
         }
         
         // Register user
         const response = await registerUser(registrationData);
         
-        toast({
-          title: "Registration Successful",
-          description: "Your account has been created successfully!",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
-        
         console.log('User registered with ID:', response.user_id);
         
-        // Navigate to signature page
-        navigate('/auth/signature');
+        // Show success message
+        setSuccess("Account created successfully! Redirecting...");
+        
+        // Navigate to signature page after a brief delay
+        setTimeout(() => {
+          navigate('/auth/signature');
+        }, 1500);
         
       } catch (error: any) {
         console.error('Registration failed:', error);
@@ -134,13 +132,7 @@ const ContactDetails: React.FC = () => {
           errorMessage = error.message;
         }
         
-        toast({
-          title: "Registration Failed",
-          description: errorMessage,
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
+        setError(errorMessage);
       } finally {
         setIsRegistering(false);
       }
@@ -224,6 +216,12 @@ const ContactDetails: React.FC = () => {
               </FormControl>
             </VStack>
             
+            {/* Error Message */}
+            {error && <ErrorMessage message={error} />}
+
+            {/* Success Message */}
+            {success && <SuccessMessage message={success} />}
+
             {/* Next Step Button */}
             <NextButton 
               onClick={handleNext} 

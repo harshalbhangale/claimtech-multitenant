@@ -7,10 +7,10 @@ export interface RegisterUserData {
   first_name: string;
   last_name: string;
   middle?: string;
-  dob: string; // Format: YYYY-MM-DD
+  dob: string; 
   phone: string;
   email: string;
-  lender: string[]; // Array of selected lender IDs
+  lenders: string[];
 }
 
 export interface RegisterUserResponse {
@@ -36,7 +36,6 @@ export const registerUser = async (userData: RegisterUserData): Promise<Register
     console.log('Access Token:', access);
     console.log('Refresh Token:', refresh);
 
-    
     return response.data;
   } catch (error) {
     console.error('Failed to register user:', error);

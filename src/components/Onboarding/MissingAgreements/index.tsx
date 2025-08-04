@@ -65,8 +65,8 @@ const MissingAgreements: React.FC = () => {
   }, []);
 
   // Format lender display name with other brands
-  const formatLenderName = (lender: LenderGroup): string => {
-    return lender.on_display_name;
+  const formatLenderName = (lenders: LenderGroup): string => {
+    return lenders.on_display_name;
   };
 
   const toggleSelect = (lenderId: string) => {
@@ -144,28 +144,26 @@ const MissingAgreements: React.FC = () => {
 
       <Container maxW="3xl" py={10}>
         <VStack spacing={8} align="stretch">
-          <Text fontSize="xl" fontWeight="bold" textAlign="center">
-            No agreements found automatically.
-          </Text>
-          <Text fontSize="sm" textAlign="center" maxW="lg" mx="auto">
-            We could not find car finance agreements in your credit report, but don't worry! You can
-            manually select your finance providers below.
-          </Text>
-
-          <Box bg={config.accentLightColor} borderRadius="md" p={3} fontSize="sm" fontWeight="medium" border="1px solid" borderColor={`${config.accentColor}40`}>
-            <Flex align="center">
-              <Icon as={ExclamationCircleIcon} w={4} h={4} mr={2} color={config.accentColor} />
-              <Text fontFamily="Poppins">
-                Over the <Text as="span" fontWeight="bold">next 24 hours</Text> we will receive more of your agreements going back to 2007.
-              </Text>
-            </Flex>
-          </Box>
-
-          <Box bg="#FAFAFA" p={3} fontSize="sm" fontWeight="bold" borderRadius="md">
-            We have not received agreement details for these lenders:
-          </Box>
-          {existingClaims.length > 0 && (
+          {/* If we have received any agreements, show them, otherwise show "No agreements found" */}
+          {existingClaims.length > 0 ? (
             <>
+              <Text fontSize="xl" fontWeight="bold" textAlign="center">
+                We found some of your agreements!
+              </Text>
+              <Text fontSize="sm" textAlign="center" maxW="lg" mx="auto">
+                We have received agreement details for the following lenders. Please review them below.
+              </Text>
+              <Box bg={config.accentLightColor} borderRadius="md" p={3} fontSize="sm" fontWeight="medium" border="1px solid" borderColor={`${config.accentColor}40`}>
+                <Flex align="center">
+                  <Icon as={ExclamationCircleIcon} w={4} h={4} mr={2} color={config.accentColor} />
+                  <Text fontFamily="Poppins">
+                    Over the <Text as="span" fontWeight="bold">next 24 hours</Text> we may receive more of your agreements going back to 2007.
+                  </Text>
+                </Flex>
+              </Box>
+              <Box bg="#FAFAFA" p={3} fontSize="sm" fontWeight="bold" borderRadius="md">
+                We have received agreement details for these lenders:
+              </Box>
               {existingClaims.map((claim) => (
                 <Box 
                   key={claim.id} 
@@ -192,35 +190,74 @@ const MissingAgreements: React.FC = () => {
                   </Flex>
                 </Box>
               ))}
+              <Text fontSize="sm" textAlign="center" maxW="lg" mx="auto">
+                If you have other lenders not listed here, you can add them below and we'll request the information directly from your lender. <strong>We need your ID for this on the next page.</strong>
+              </Text>
+              <Text fontSize="md" textAlign="center" fontWeight="bold">
+                Any missing agreements?
+              </Text>
+              <Text fontSize="xs" textAlign="center">
+                Add them on now and we'll request the documents from your lenders!
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text fontSize="xl" fontWeight="bold" textAlign="center">
+                No agreements found automatically.
+              </Text>
+              <Text fontSize="sm" textAlign="center" maxW="lg" mx="auto">
+                We could not find car finance agreements in your credit report, but don't worry! You can manually select your finance providers below.
+              </Text>
+              <Box bg={config.accentLightColor} borderRadius="md" p={3} fontSize="sm" fontWeight="medium" border="1px solid" borderColor={`${config.accentColor}40`}>
+                <Flex align="center">
+                  <Icon as={ExclamationCircleIcon} w={4} h={4} mr={2} color={config.accentColor} />
+                  <Text fontFamily="Poppins">
+                    Over the <Text as="span" fontWeight="bold">next 24 hours</Text> we will receive more of your agreements going back to 2007.
+                  </Text>
+                </Flex>
+              </Box>
+              <Text fontSize="sm" textAlign="center" maxW="lg" mx="auto">
+                If we don't get your agreements in the next 24 hours, you can add them below and we'll request the information directly from your lender. <strong>We need your ID for this on the next page.</strong>
+              </Text>
+              <Text fontSize="md" textAlign="center" fontWeight="bold">
+                Any missing agreements?
+              </Text>
+              <Text fontSize="xs" textAlign="center">
+                Add them on now and we'll request the documents from your lenders!
+              </Text>
             </>
           )}
-          <Text fontSize="sm" textAlign="center" maxW="lg" mx="auto">
-            Any lenders that we don't get over the next 24 hours. We will request the information
-            directly from your lender. <strong >We need your ID for this on the next page.</strong>
-          </Text>
-          <Text fontSize="md" textAlign="center" fontWeight="bold">
-            Any missing agreements?
-          </Text>
-          <Text fontSize="xs" textAlign="center">
-            Add them on now and we'll request the documents from your lenders!
-          </Text>
 
           {/* Select lenders */}
-          <Box border="1.5px solid #E2E8F0" borderRadius="lg">
+          <Box
+            border="1.5px solid #E2E8F0"
+            borderRadius="lg"
+            boxShadow="xs"
+            transition="box-shadow 0.25s cubic-bezier(.4,0,.2,1)"
+            _hover={{ boxShadow: "md" }}
+          >
             <Flex
               onClick={() => setOpen(!open)}
               align="center"
               justify="space-between"
               p={3}
               cursor="pointer"
+              transition="background 0.2s"
+              _hover={{ bg: "#F5F7FA" }}
+              userSelect="none"
             >
               <Text fontWeight="bold" fontSize="sm">
                 Select lenders
               </Text>
-              <ChevronDown size={18} style={{ transform: open ? 'rotate(180deg)' : undefined }} />
+              <Box
+                as="span"
+                transition="transform 0.3s cubic-bezier(.4,0,.2,1)"
+                style={{ display: "inline-block", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+              >
+                <ChevronDown size={18} />
+              </Box>
             </Flex>
-            <Collapse in={open} animateOpacity>
-
+            <Collapse in={open} animateOpacity style={{ transition: "height 0.35s cubic-bezier(.4,0,.2,1)" }}>
               <HStack px={3} py={2} spacing={2}>
                 <Icon as={Search} w={4} h={4} color="gray.500" />
                 <Input
@@ -228,39 +265,58 @@ const MissingAgreements: React.FC = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   border="none"
-                  _focus={{ outline: 'none' }}
+                  _focus={{ outline: 'none', bg: "#F5F7FA" }}
+                  transition="background 0.2s"
+                  bg="white"
                 />
               </HStack>
-              <Box maxH="260px" overflowY="auto" >
-                {filtered.map((lender) => {
+              <Box maxH="260px" overflowY="auto" sx={{
+                scrollbarWidth: "thin",
+                scrollbarColor: `${config.accentLightColor} #F5F7FA`
+              }}>
+                {filtered.map((lender, idx) => {
                   const isSel = selected.includes(lender.id);
                   return (
                     <Box
                       key={lender.id}
                       px={4}
                       py={3}
-                      borderBottom="2px solid #E2E8F0"
+                      borderBottom={idx === filtered.length - 1 ? "none" : "2px solid #E2E8F0"}
                       cursor="pointer"
-                      _hover={{ bg: '#F9FAFB' }}
+                      _hover={{ bg: config.accentLightColor, transition: "background 0.18s" }}
                       bg={isSel ? config.accentLightColor : 'white'}
                       onClick={() => toggleSelect(lender.id)}
+                      transition="background 0.18s, box-shadow 0.18s"
+                      boxShadow={isSel ? "sm" : "none"}
                     >
                       <Flex align="center" justify="space-between">
-                        <Text fontSize="sm" fontWeight={isSel ? 'bold' : 'medium'}>
+                        <Text
+                          fontSize="sm"
+                          fontWeight={isSel ? 'bold' : 'medium'}
+                          color={isSel ? config.accentColor : "inherit"}
+                          transition="color 0.18s"
+                        >
                           {formatLenderName(lender)}
                         </Text>
                         <Box
                           w="20px"
                           h="20px"
                           borderRadius="full"
-                          border="2px solid" 
+                          border="2px solid"
                           borderColor={isSel ? config.accentColor : '#E9ECF0'}
                           bg="white"
                           display="flex"
                           alignItems="center"
                           justifyContent="center"
+                          transition="border-color 0.18s"
                         >
-                          {isSel && <Check size={12} color={config.accentColor} strokeWidth={3} />}
+                          <Box
+                            opacity={isSel ? 1 : 0}
+                            transform={isSel ? "scale(1)" : "scale(0.7)"}
+                            transition="opacity 0.18s, transform 0.18s"
+                          >
+                            {isSel && <Check size={12} color={config.accentColor} strokeWidth={3} />}
+                          </Box>
                         </Box>
                       </Flex>
                     </Box>
@@ -275,20 +331,30 @@ const MissingAgreements: React.FC = () => {
             color="black"
             h="56px"
             borderRadius="full"
-            _hover={{ bg: `${config.primaryColor}80` }}
+            _hover={{ bg: `${config.primaryColor}80`, transform: "translateY(-2px) scale(1.02)" }}
             fontWeight="medium"
             onClick={handleContinue}
             isLoading={isSubmitting}
             loadingText="Adding lenders..."
             disabled={isSubmitting}
             rightIcon={!isSubmitting ? <Text as="span" ml={1}>→</Text> : undefined}
+            transition="all 0.18s cubic-bezier(.4,0,.2,1)"
+            boxShadow="sm"
+            _active={{ boxShadow: "md" }}
           >
             {isSubmitting ? 'Adding lenders...' : 'Continue'}
           </Button>
 
-          <VStack spacing={3}>
+          <VStack spacing={3} transition="opacity 0.3s">
             <ClaimUpTo />
-            <Image src="/icons/trustpilot.svg" alt="Trustpilot" h="32px" objectFit="contain" />
+            <Image
+              src="/icons/trustpilot.svg"
+              alt="Trustpilot"
+              h="32px"
+              objectFit="contain"
+              transition="filter 0.2s"
+              _hover={{ filter: "brightness(1.1)" }}
+            />
           </VStack>
         </VStack>
       </Container>

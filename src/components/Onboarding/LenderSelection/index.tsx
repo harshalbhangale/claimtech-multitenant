@@ -78,6 +78,15 @@ const LenderSelection: React.FC = () => {
     fetchLenders();
   }, []);
 
+  // Auto-save selected lenders whenever they change
+  useEffect(() => {
+    if (selectedLenders.length > 0) {
+      saveLenderSelection({
+        selectedLenders
+      });
+    }
+  }, [selectedLenders]);
+
   // Separate lenders by priority
   const mainLenders = lenders.filter(lender => lender.priority === 10);
   const additionalLenders = lenders.filter(lender => lender.priority === 0);
@@ -143,7 +152,7 @@ const LenderSelection: React.FC = () => {
           <VStack spacing={{ base: 4, md: 6 }} justify="center" minH="60vh">
             <Alert status="error" borderRadius="lg">
               <AlertIcon />
-              {error}
+              {error || 'Failed to load lenders. Please try again.'}
             </Alert>
             <Button 
               onClick={() => window.location.reload()} 

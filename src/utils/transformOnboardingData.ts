@@ -68,7 +68,7 @@ export const transformOnboardingDataForRegistration = (): RegisterUserData | nul
       dob: formatDob(userDetails.dob),
       phone: formatPhone(contactDetails.mobile),
       email: contactDetails.email.trim(),
-      lender: lenderIds
+      lenders: lenderIds
     };
 
     console.log('Transformed onboarding data:', registrationData);

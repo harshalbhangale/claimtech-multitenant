@@ -9,6 +9,7 @@ export interface Claim {
   updated_at: string;
   agreements: any[];
   lender_name: string;
+  id_document_url?: string; // Optional field to track if ID is uploaded
 }
 
 export const getClaims = async (): Promise<Claim[]> => {

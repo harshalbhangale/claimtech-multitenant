@@ -3,36 +3,15 @@ import { VStack, HStack, Text, Icon } from '@chakra-ui/react';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import ClaimCard from './ClaimCard';
 import { useTenant } from '../../../contexts/TenantContext';
-import { useState, useEffect } from 'react';
-import { getClaims } from '../../../api/services/dashboard/getClaims';
-import type { Claim } from '../../../api/services/dashboard/getClaims';
-import { Spinner, Alert, AlertIcon, Button } from '@chakra-ui/react';
+import { useClaims } from '../../../hooks/queries/useClaims';
+import { Spinner, Alert, AlertIcon } from '@chakra-ui/react';
 
 const OpenClaims: React.FC = () => {
   const { config } = useTenant();
-  const [claims, setClaims] = useState<Claim[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
+  // TanStack Query handles all the loading, error, and data states
+  const { data: claims, isPending, error } = useClaims();
 
-  useEffect(() => {
-    const fetchClaims = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        console.log('🔍 Dashboard: Fetching claims...');
-        const data = await getClaims();
-        console.log('📊 Dashboard: Claims received:', data);
-        console.log('📊 Dashboard: Number of claims:', data?.length || 0);
-        setClaims(data);
-      } catch (err) {
-        console.error('❌ Dashboard: Failed to load claims:', err);
-        setError('Failed to load claims.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchClaims();
-  }, []);
   return (
     <VStack spacing={{ base: 3, md: 4 }} align="stretch">
       <HStack justify="space-between" align="center">
@@ -45,15 +24,8 @@ const OpenClaims: React.FC = () => {
         >
           My open claims
         </Text>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => window.location.reload()}
-          colorScheme="blue"
-        >
-          Refresh
-        </Button>
       </HStack>
+      
       <HStack 
         bg={config.accentLightColor}
         borderRadius={{ base: "md", md: "md" }} 
@@ -82,19 +54,26 @@ const OpenClaims: React.FC = () => {
         </Text>
       </HStack>
 
-      {loading && <Spinner size={{ base: "md", md: "lg" }} />}
+      {/* TanStack Query handles loading state */}
+      {isPending && <Spinner size={{ base: "md", md: "lg" }} />}
+      
+      {/* TanStack Query handles error state */}
       {error && (
         <Alert status="error" borderRadius={{ base: "md", md: "md" }} fontSize={{ base: "sm", md: "md" }}>
           <AlertIcon />
-          {error}
+          Failed to load claims. Please try again.
         </Alert>
       )}
-      {!loading && !error && claims.length === 0 && (
+      
+      {/* TanStack Query handles empty state */}
+      {!isPending && !error && (!claims || claims.length === 0) && (
         <Text color="gray.500" fontFamily="Poppins" fontSize={{ base: "sm", md: "md" }} textAlign="center" py={{ base: 4, md: 6 }}>
           No open claims found.
         </Text>
       )}
-      {claims.map((claim) => (
+      
+      {/* Render claims */}
+      {claims?.map((claim) => (
         <ClaimCard
           key={claim.id}
           id={claim.id}

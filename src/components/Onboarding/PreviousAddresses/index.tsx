@@ -7,7 +7,6 @@ import {
   Flex,
   Button,
   Icon,
-  useToast,
   Spinner,
   Alert,
   AlertIcon,
@@ -30,6 +29,9 @@ import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import NextButton from '../Common/NextButton';
 import Trustpilot from '../Common/Trustpilot';
+import SuccessMessage from '../Common/SuccessMessage';
+import WarningMessage from '../Common/WarningMessage';
+import ErrorMessage from '../Common/ErrorMessage';
 import { fetchUserAddresses } from '../../../api/services/onboarding/addressMatch';
 import type { BestMatchAddress } from '../../../api/services/onboarding/addressMatch';
 import { fetchAddressesByPostcode } from '../../../api/services/onboarding/addressCheck';
@@ -49,7 +51,6 @@ interface AddressState {
 export const PreviousAddressesPage: React.FC = () => {
   const navigate = useNavigate();
   const { config } = useTenant();
-  const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   
   // Main addresses state
@@ -61,6 +62,9 @@ export const PreviousAddressesPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [addressError, setAddressError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   // Modal states for adding addresses
   const [modalPostcode, setModalPostcode] = useState('');
@@ -111,19 +115,13 @@ export const PreviousAddressesPage: React.FC = () => {
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
       setAuthError('No access token found. Please login again.');
-      toast({
-        title: 'Authentication Required',
-        description: 'Please login to continue.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      setError('Please login to continue.');
       setTimeout(() => {
         navigate('/auth/contactdetails');
       }, 3000);
       return;
     }
-  }, [navigate, toast]);
+  }, [navigate]);
 
   // Load saved state on component mount
   useEffect(() => {
@@ -147,6 +145,36 @@ export const PreviousAddressesPage: React.FC = () => {
     // Fetch fresh data if no saved state or it's old
     loadAddresses();
   }, []);
+
+  // Clear success message after a delay
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  // Clear warning message after a delay
+  useEffect(() => {
+    if (warning) {
+      const timer = setTimeout(() => {
+        setWarning(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [warning]);
+
+  // Clear error message after a delay
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   // Fetch addresses from API
   const loadAddresses = async () => {
@@ -200,25 +228,13 @@ export const PreviousAddressesPage: React.FC = () => {
         
         if (error.message?.includes('Session expired') || error.message?.includes('No access token')) {
           setAuthError(error.message);
-          toast({
-            title: 'Session Expired',
-            description: 'Please login again to continue.',
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
+          setError('Session expired. Please login again.');
           setTimeout(() => {
             navigate('/auth/contactdetails');
           }, 3000);
         } else {
           setAddressError(error.message || 'Failed to load addresses');
-          toast({
-            title: 'Error Loading Addresses',
-            description: error.message || 'Failed to load addresses. You can still continue to the next step.',
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
+          setError('Failed to load addresses. You can still continue to the next step.');
         }
       } finally {
         setLoading(false);
@@ -303,18 +319,16 @@ export const PreviousAddressesPage: React.FC = () => {
   const handleModalFind = async () => {
     const pc = modalPostcode.trim();
     if (!validPostcode(pc)) {
-      toast({
-        title: "Invalid Postcode",
-        description: "Please enter a valid UK postcode",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
+      setError('Please enter a valid UK postcode');
       return;
     }
 
     try {
       setModalLoading(true);
+      setError(null);
+      setSuccess(null);
+      setWarning(null);
+      
       const rawResults = await fetchAddressesByPostcode(pc);
       const formatted = rawResults.map((item, idx) => {
         const parts = [
@@ -340,13 +354,7 @@ export const PreviousAddressesPage: React.FC = () => {
       setModalRawAddresses(rawResults);
       setModalSelectedId(null);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to find addresses for this postcode",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
+      setError('Failed to find addresses for this postcode');
     } finally {
       setModalLoading(false);
     }
@@ -378,13 +386,7 @@ export const PreviousAddressesPage: React.FC = () => {
       const addressExists = addresses.some(addr => addr.address_id === newAddress.address_id);
       
       if (addressExists) {
-        toast({
-          title: "Address Already Added",
-          description: "This address is already in your list.",
-          status: "warning",
-          duration: 3000,
-          isClosable: true,
-        });
+        setWarning('This address is already in your list.');
       } else {
         console.log('Adding new address:', newAddress);
         
@@ -407,13 +409,7 @@ export const PreviousAddressesPage: React.FC = () => {
           addedAddresses: updatedAddedAddresses
         });
         
-        toast({
-          title: "Address Added",
-          description: "New address has been added to your list.",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
+        setSuccess('New address has been added to your list.');
       }
 
       // Reset modal state
@@ -485,6 +481,9 @@ export const PreviousAddressesPage: React.FC = () => {
 
   const handleNextStep = async () => {
     setIsSubmitting(true);
+    setError(null);
+    setSuccess(null);
+    setWarning(null);
     
     try {
       // Submit addresses to backend
@@ -511,13 +510,7 @@ export const PreviousAddressesPage: React.FC = () => {
         // Handle 409 Conflict error - bypass and continue to OTP verification
         if (inviteError.response?.status === 409) {
           console.log('409 Conflict detected - bypassing invite API and proceeding to OTP verification');
-          toast({
-            title: "Proceeding to Verification",
-            description: "Moving to OTP verification step.",
-            status: "info",
-            duration: 2000,
-            isClosable: true,
-          });
+          setSuccess('Moving to OTP verification step.');
         } else {
           // Re-throw other errors that aren't 409
           throw inviteError;
@@ -527,16 +520,12 @@ export const PreviousAddressesPage: React.FC = () => {
       // Clear the saved state since we're moving to the next step
       localStorage.removeItem(LOCAL_STORAGE_KEY);
       
-      toast({
-        title: "Processing Complete",
-        description: "Please check your phone for the verification code.",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      setSuccess('Sending OTP ! Please check your phone for the verification code.');
 
-      // Navigate to OTP verification page
-      navigate('/auth/otpverify');
+      // Navigate to OTP verification page after a brief delay
+      setTimeout(() => {
+        navigate('/auth/otpverify');
+      }, 2000);
       
     } catch (error: any) {
       console.error('Error in next step:', error);
@@ -554,13 +543,7 @@ export const PreviousAddressesPage: React.FC = () => {
         errorMessage = error.message;
       }
       
-      toast({
-        title: "Error",
-        description: errorMessage,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -626,25 +609,7 @@ export const PreviousAddressesPage: React.FC = () => {
                 <Text ml={4} color="gray.600">Loading your addresses...</Text>
               </Flex>
             ) : addressError ? (
-              <Box
-                textAlign="center"
-                py={8}
-                px={4}
-                bg="orange.50"
-                borderRadius="lg"
-                border="1px solid"
-                borderColor="orange.200"
-              >
-                <Text color="orange.800" fontSize="md" fontWeight="bold" mb={2}>
-                  Unable to Load Addresses
-                </Text>
-                <Text color="orange.700" fontSize="sm" mb={4}>
-                  {addressError}
-                </Text>
-                <Text color="gray.600" fontSize="xs">
-                  You can continue without reviewing addresses by clicking "Next step" below
-                </Text>
-              </Box>
+              <ErrorMessage message={addressError} />
             ) : addresses.length === 0 ? (
               <Box
                 textAlign="center"
@@ -708,9 +673,6 @@ export const PreviousAddressesPage: React.FC = () => {
                               </Text>
                             )}
                           </Flex>
-                          <Text fontSize="sm" color="gray.500">
-                            Address ID: {address.address_id}
-                          </Text>
                         </Box>
 
                         {/* Remove Button */}
@@ -755,6 +717,9 @@ export const PreviousAddressesPage: React.FC = () => {
               </Box>
             )}
 
+            {/* Success Message for OTP */}
+            {success && <SuccessMessage message={success} />}
+
             {/* Next Step Button */}
             <NextButton 
               onClick={handleNextStep} 
@@ -788,6 +753,11 @@ export const PreviousAddressesPage: React.FC = () => {
               <Text fontSize="sm" color="gray.600">
                 Enter a postcode to search for addresses to add to your previous addresses list.
               </Text>
+
+              {/* Message Components */}
+              {error && <ErrorMessage message={error} />}
+              {success && <SuccessMessage message={success} />}
+              {warning && <WarningMessage message={warning} />}
 
               {/* Postcode Input */}
               <HStack spacing={4}>
@@ -848,7 +818,7 @@ export const PreviousAddressesPage: React.FC = () => {
                         <Box
                           key={addr.id}
                           p={3}
-                          _hover={{ bg: '#F7FAFC' }}
+                          _hover={{ bg: config.accentLightColor }}
                           bg={modalSelectedId === addr.id ? '#F7FAFC' : 'transparent'}
                           onClick={() => {
                             setModalSelectedId(addr.id);
@@ -890,10 +860,10 @@ export const PreviousAddressesPage: React.FC = () => {
             <Button
               bg={config.primaryColor}
               color="black"
-              _hover={{ bg: config.accentColor }}
+              _hover={{ bg: `${config.primaryColor}CC` }}
               onClick={handleAddAddress}
               isDisabled={modalSelectedId === null}
-              borderRadius="lg"
+              borderRadius="xl"
             >
               Add Address
             </Button>

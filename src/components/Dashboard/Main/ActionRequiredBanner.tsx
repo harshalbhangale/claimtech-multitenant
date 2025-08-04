@@ -22,7 +22,7 @@ interface ActionBannerProps {
 const ActionBanner: React.FC<ActionBannerProps> = ({
   onUploadId,
   label = 'Action Required',
-  buttonText = 'Upload ID Document',
+  buttonText = 'Upload ID ',
 }) => {
   const navigate = useNavigate();
   const { config } = useTenant();
@@ -52,7 +52,7 @@ const ActionBanner: React.FC<ActionBannerProps> = ({
         <Button
           bg={config.primaryColor}
           color="black"
-          _hover={{ bg: `${config.primaryColor}80` }}
+          _hover={{ bg: `${config.primaryColor}CC` }}
           borderRadius="full"
           h="32px"
           px={6}

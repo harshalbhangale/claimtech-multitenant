@@ -200,7 +200,7 @@ const AddressSearch: React.FC = () => {
                         <Box
                           key={addr.id}
                           p={3}
-                          _hover={{ bg: '#F7FAFC' }}
+                          _hover={{ bg: config.accentLightColor }}
                           bg={selectedId === addr.id ? '#F7FAFC' : 'transparent'}
                           onClick={() => {
                             setSelectedId(addr.id);

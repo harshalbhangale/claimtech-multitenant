@@ -49,7 +49,7 @@ const Refer: React.FC<ReferProps> = ({ onRefer }) => {
           borderRadius="full"
           h="36px"
           px={6}
-          fontWeight="bold"
+          fontWeight="medium"
           fontSize="sm"
           onClick={handleClick}
         >

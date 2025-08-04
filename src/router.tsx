@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RootLayout from './layouts/RootLayout';
 import AuthLayout from './layouts/AuthLayout';
 import DashboardLayout from './layouts/DashboardLayout';
+import AuthGuard from './components/AuthGuard';
 import Login from './pages/Auth/Login';
 import Dashboard from './pages/Dashboard';
 import DocumentUpload from './pages/DocumentUpload';
@@ -19,6 +20,8 @@ import NotFound from './pages/NotFound';
 import ReferPage from './pages/Refer';
 import PreviousAddresses from './components/Onboarding/PreviousAddresses';
 import EmailSuccessful from './components/Login/EmailSuccessful';
+import MagicLogin from './components/Login/MagicLogin';
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -44,7 +47,11 @@ const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-        element: <DashboardLayout />,
+        element: (
+          <AuthGuard requireAuth={true}>
+            <DashboardLayout />
+          </AuthGuard>
+        ),
         children: [
           { index: true, element: <Dashboard /> },
           { path: 'profile', element: <Profile /> },
@@ -55,6 +62,10 @@ const router = createBrowserRouter([
       { path: '404', element: <NotFound /> },
       { path: '*', element: <Navigate to="/404" replace /> },
     ],
+  },
+  {
+    path: '/magic-login',
+    element: <MagicLogin />,
   },
 ]);
 
