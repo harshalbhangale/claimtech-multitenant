@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getClaims } from '../../api/services/dashboard/getClaims';
 import type { Claim } from '../../api/services/dashboard/getClaims';
+import { fetchAgreements, type Agreement } from '../../api/services/dashboard/agreementDetails';
 
 export const useClaims = () => {
   return useQuery<Claim[]>({
@@ -11,5 +12,18 @@ export const useClaims = () => {
     refetchOnWindowFocus: true, // Refetch when user returns to tab
     retry: 3, // Retry failed requests 3 times
     retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+  });
+};
+
+export const useAgreements = (claimId: string) => {
+  return useQuery<Agreement[]>({
+    queryKey: ['agreements', claimId],
+    queryFn: () => fetchAgreements(claimId),
+    enabled: !!claimId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    retry: 2,
+    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 }; 

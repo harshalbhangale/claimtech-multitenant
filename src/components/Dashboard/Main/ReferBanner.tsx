@@ -4,25 +4,19 @@ import {
   Flex,
   Text,
   Button,
+  Badge,
 } from '@chakra-ui/react';
-import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../../contexts/TenantContext';
+
 interface ReferProps {
   onRefer?: () => void;
 }
 
 /**
- * Yellow banner prompting user to refer friends.
+ * Yellow banner for refer-a-friend (Coming Soon, button disabled).
  */
-const Refer: React.FC<ReferProps> = ({ onRefer }) => {
-  const navigate = useNavigate();
+const Refer: React.FC<ReferProps> = () => {
   const { config } = useTenant();
-  const handleClick = () => {
-    if (onRefer) {
-      onRefer();
-    }
-    navigate('/dashboard/refer');
-  };
 
   return (
     <Box
@@ -35,7 +29,7 @@ const Refer: React.FC<ReferProps> = ({ onRefer }) => {
       <Flex justify="space-between" align="center" flexWrap="wrap" gap={4}>
         <Box>
           <Text fontWeight="bold" mb={1} fontSize="md">
-            Refer a friend ✨
+            Refer a friend <Badge ml={2} colorScheme="yellow" borderRadius="full" px={2} fontSize="0.8em">Coming Soon</Badge>
           </Text>
           <Text fontSize="sm">
             Refer friends or family and get a £20 Amazon voucher per successful claimant!
@@ -51,7 +45,7 @@ const Refer: React.FC<ReferProps> = ({ onRefer }) => {
           px={6}
           fontWeight="medium"
           fontSize="sm"
-          onClick={handleClick}
+          isDisabled
         >
           Refer
         </Button>

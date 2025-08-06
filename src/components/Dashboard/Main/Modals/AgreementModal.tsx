@@ -1,5 +1,5 @@
 // src/components/Dashboard/Main/AgreementModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -15,7 +15,10 @@ import {
   Text,
   useToast,
   Box,
+  HStack,
+  Icon,
 } from '@chakra-ui/react';
+import { DocumentIcon, XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useTenant } from '../../../../contexts/TenantContext';
 import { saveAgreementDetails } from '../../../../api/services/dashboard/agreementDetails';
 import type { AgreementDetailsRequest } from '../../../../api/services/dashboard/agreementDetails';
@@ -34,18 +37,73 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
   const { config } = useTenant();
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAddAnother, setShowAddAnother] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [formData, setFormData] = useState<AgreementDetailsRequest>({
     agreement_number: '',
     vehicle_registration: '',
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleInputChange = (field: keyof AgreementDetailsRequest, value: any) => {
     setFormData((prev: AgreementDetailsRequest) => ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a JPG, PNG or PDF file",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 10MB",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      agreement_number: '',
+      vehicle_registration: '',
+    });
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setShowAddAnother(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,14 +121,22 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await saveAgreementDetails(claimId, formData);
+      // Include file in the request if selected
+      const requestData = {
+        ...formData,
+        agreement_document: selectedFile || undefined,
+      };
+
+      await saveAgreementDetails(claimId, requestData);
       toast({
         title: "Success",
         description: "Agreement details have been saved successfully.",
         status: "success",
         duration: 3000,
       });
-      onClose();
+      
+      // Show option to add another agreement
+      setShowAddAnother(true);
     } catch (error: any) {
       console.error('Error saving agreement details:', error);
       toast({
@@ -84,8 +150,17 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
     }
   };
 
+  const handleAddAnother = () => {
+    resetForm();
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl" motionPreset="slideInBottom">
+    <Modal isOpen={isOpen} onClose={handleClose} size="2xl" motionPreset="slideInBottom">
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
       <ModalContent borderRadius="2xl" mx={4}>
         <Box bg={config.accentLightColor} p={6} borderTopRadius="2xl">
@@ -97,57 +172,178 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
         <ModalCloseButton top={6} right={6} />
         
         <ModalBody p={6}>
-          <form onSubmit={handleSubmit}>
+          {!showAddAnother ? (
+            <form onSubmit={handleSubmit}>
+              <VStack spacing={6} align="stretch">
+                {/* Agreement Number - Required */}
+                <FormControl isRequired>
+                  <FormLabel fontWeight="semibold" fontSize="md">Agreement Number</FormLabel>
+                  <Input 
+                    placeholder="Enter agreement number"
+                    size="lg"
+                    bg="white"
+                    borderColor="gray.300"
+                    _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
+                    value={formData.agreement_number}
+                    onChange={(e) => handleInputChange('agreement_number', e.target.value)}
+                  />
+                </FormControl>
+
+                {/* Vehicle Registration - Optional */}
+                <FormControl>
+                  <FormLabel fontWeight="semibold" fontSize="md">Vehicle Registration</FormLabel>
+                  <Input 
+                    placeholder="e.g., AB12 CDE" 
+                    size="lg"
+                    bg="white"
+                    borderColor="gray.300"
+                    _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
+                    value={formData.vehicle_registration || ''}
+                    onChange={(e) => handleInputChange('vehicle_registration', e.target.value)}
+                  />
+                </FormControl>
+
+                {/* Agreement Document Upload - Optional */}
+                <FormControl>
+                  <FormLabel fontWeight="semibold" fontSize="md">
+                    Finance Agreement Document (Optional)
+                  </FormLabel>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    style={{ display: 'none' }}
+                  />
+                  
+                  {!selectedFile ? (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      w="full"
+                      h="56px"
+                      borderColor="gray.300"
+                      borderStyle="dashed"
+                      bg="gray.50"
+                      _hover={{ bg: "gray.100", borderColor: config.accentColor }}
+                      onClick={() => fileInputRef.current?.click()}
+                      leftIcon={<Icon as={DocumentIcon} w={5} h={5} />}
+                    >
+                      Upload Agreement Document
+                    </Button>
+                  ) : (
+                    <Box
+                      p={4}
+                      bg="green.50"
+                      border="1px solid"
+                      borderColor="green.200"
+                      borderRadius="lg"
+                    >
+                      <HStack justify="space-between" align="center">
+                        <HStack spacing={3}>
+                          <Icon as={DocumentIcon} w={5} h={5} color="green.500" />
+                          <Box>
+                            <Text fontSize="sm" fontWeight="medium" color="green.700">
+                              {selectedFile.name}
+                            </Text>
+                            <Text fontSize="xs" color="green.600">
+                              {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                            </Text>
+                          </Box>
+                        </HStack>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          color="green.600"
+                          _hover={{ bg: "green.100" }}
+                          onClick={handleRemoveFile}
+                        >
+                          <Icon as={XMarkIcon} w={4} h={4} />
+                        </Button>
+                      </HStack>
+                    </Box>
+                  )}
+                  <Text fontSize="xs" color="gray.500" mt={2}>
+                    Accepted formats: JPG, PNG, PDF (max 10MB)
+                  </Text>
+                </FormControl>
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  bg={config.primaryColor}
+                  color="black"
+                  size="lg"
+                  height="56px"
+                  borderRadius="full"
+                  _hover={{ bg: `${config.primaryColor}80` }}
+                  fontFamily="Poppins"
+                  fontSize="md"
+                  fontWeight="semibold"
+                  mt={4}
+                  isLoading={isSubmitting}
+                  loadingText="Saving..."
+                  disabled={isSubmitting}
+                >
+                  Save Agreement Details
+                </Button>
+              </VStack>
+            </form>
+          ) : (
+            // Success state with option to add another
             <VStack spacing={6} align="stretch">
-              {/* Agreement Number - Required */}
-              <FormControl isRequired>
-                <FormLabel fontWeight="semibold" fontSize="md">Agreement Number</FormLabel>
-                <Input 
-                  placeholder="Enter agreement number"
-                  size="lg"
-                  bg="white"
-                  borderColor="gray.300"
-                  _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
-                  value={formData.agreement_number}
-                  onChange={(e) => handleInputChange('agreement_number', e.target.value)}
-                />
-              </FormControl>
-
-              {/* Vehicle Registration - Optional */}
-              <FormControl>
-                <FormLabel fontWeight="semibold" fontSize="md">Vehicle Registration</FormLabel>
-                <Input 
-                  placeholder="e.g., AB12 CDE" 
-                  size="lg"
-                  bg="white"
-                  borderColor="gray.300"
-                  _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
-                  value={formData.vehicle_registration || ''}
-                  onChange={(e) => handleInputChange('vehicle_registration', e.target.value)}
-                />
-              </FormControl>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                bg={config.primaryColor}
-                color="black"
-                size="lg"
-                height="56px"
-                borderRadius="full"
-                _hover={{ bg: `${config.primaryColor}80` }}
-                fontFamily="Poppins"
-                fontSize="md"
-                fontWeight="semibold"
-                mt={4}
-                isLoading={isSubmitting}
-                loadingText="Saving..."
-                disabled={isSubmitting}
+              <Box
+                p={6}
+                bg="green.50"
+                border="1px solid"
+                borderColor="green.200"
+                borderRadius="lg"
+                textAlign="center"
               >
-                Save Agreement Details
-              </Button>
+                <Icon as={DocumentIcon} w={8} h={8} color="green.500" mx="auto" mb={3} />
+                <Text fontSize="lg" fontWeight="bold" color="green.700" mb={2}>
+                  Agreement Saved Successfully!
+                </Text>
+                <Text fontSize="sm" color="green.600">
+                  Your agreement details have been saved. Would you like to add another agreement?
+                </Text>
+              </Box>
+
+              <HStack spacing={4}>
+                <Button
+                  flex={1}
+                  bg={config.primaryColor}
+                  color="black"
+                  size="lg"
+                  height="56px"
+                  borderRadius="full"
+                  _hover={{ bg: `${config.primaryColor}80` }}
+                  fontFamily="Poppins"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  leftIcon={<Icon as={PlusIcon} w={5} h={5} />}
+                  onClick={handleAddAnother}
+                >
+                  Another Agreement
+                </Button>
+                <Button
+                  flex={1}
+                  variant="outline"
+                  size="lg"
+                  height="56px"
+                  borderRadius="full"
+                  borderColor="gray.300"
+                  _hover={{ bg: "gray.50" }}
+                  fontFamily="Poppins"
+                  fontSize="md"
+                  fontWeight="semibold"
+                  onClick={handleClose}
+                >
+                  Done
+                </Button>
+              </HStack>
             </VStack>
-          </form>
+          )}
         </ModalBody>
       </ModalContent>
     </Modal>

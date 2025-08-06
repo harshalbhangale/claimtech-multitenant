@@ -2,9 +2,12 @@ import React from 'react';
 import { VStack, HStack, Text, Icon } from '@chakra-ui/react';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import ClaimCard from './ClaimCard';
+import ClaimCardSkeleton from './ClaimCardSkeleton';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useClaims } from '../../../hooks/queries/useClaims';
-import { Spinner, Alert, AlertIcon } from '@chakra-ui/react';
+import { useRequirements } from '../../../hooks/queries/useRequirements';
+import { useAgreements } from '../../../hooks/queries/useClaims';
+import { Alert, AlertIcon } from '@chakra-ui/react';
 
 const OpenClaims: React.FC = () => {
   const { config } = useTenant();
@@ -54,8 +57,14 @@ const OpenClaims: React.FC = () => {
         </Text>
       </HStack>
 
-      {/* TanStack Query handles loading state */}
-      {isPending && <Spinner size={{ base: "md", md: "lg" }} />}
+      {/* TanStack Query handles loading state - Show skeleton cards */}
+      {isPending && (
+        <VStack spacing={4} align="stretch">
+          <ClaimCardSkeleton hasAdditionalRequirements={false} />
+          <ClaimCardSkeleton hasAdditionalRequirements={false} />
+          <ClaimCardSkeleton hasAdditionalRequirements={false} />
+        </VStack>
+      )}
       
       {/* TanStack Query handles error state */}
       {error && (
@@ -73,18 +82,39 @@ const OpenClaims: React.FC = () => {
       )}
       
       {/* Render claims */}
-      {claims?.map((claim) => (
-        <ClaimCard
-          key={claim.id}
-          id={claim.id}
-          lender={claim.lender_name}
-          stage={claim.status}
-          progress={25}
-          onUploadId={() => {}}
-          onProvideDetails={() => {}}
-        />
-      ))}
+      {!isPending && !error && claims?.map((claim) => {
+        // Fetch requirements for this claim
+        // We'll use the useRequirements hook inside a child component to avoid breaking rules of hooks
+        return (
+          <ClaimCardWithRequirements
+            key={claim.id}
+            claim={claim}
+          />
+        );
+      })}
     </VStack>
+  );
+};
+
+// Helper component to fetch requirements and agreements for a claim and render ClaimCard
+const ClaimCardWithRequirements: React.FC<{ claim: any }> = ({ claim }) => {
+  const { data: requirements, isPending: _isReqPending } = useRequirements(claim.id);
+  const { data: agreements, isPending: isAgPending } = useAgreements(claim.id);
+  // Count pending requirements
+  const hasPendingRequirements = (requirements?.filter(r => r.status === 'pending').length || 0) > 0;
+
+  return (
+    <ClaimCard
+      id={claim.id}
+      lender={claim.lender_name}
+      stage={claim.status}
+      progress={25}
+      onUploadId={() => {}}
+      onProvideDetails={() => {}}
+      hasAdditionalRequirements={hasPendingRequirements}
+      agreements={agreements}
+      agreementsLoading={isAgPending}
+    />
   );
 };
 

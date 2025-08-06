@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button as ChakraButton, Text } from '@chakra-ui/react';
+import { Button as ChakraButton} from '@chakra-ui/react';
 import { useTenant } from '../../../contexts/TenantContext';
 import type{ButtonProps} from '@chakra-ui/react';
 
@@ -23,7 +23,6 @@ const Button: React.FC<CustomButtonProps> = ({ children, ...props }) => {
       height="auto"
       fontSize="md"
       borderRadius="full"
-      rightIcon={<Text as="span" ml={1}>→</Text>}
       minH="56px"
       fontFamily="Poppins"
       {...props}
