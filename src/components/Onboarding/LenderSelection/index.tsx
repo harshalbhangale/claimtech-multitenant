@@ -11,6 +11,8 @@ import {
   Spinner,
   Alert,
   AlertIcon,
+  Image,
+  Center,
 } from '@chakra-ui/react';
 import { ChevronDown, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -32,8 +34,34 @@ const LenderSelection: React.FC = () => {
   const [lenders, setLenders] = useState<LenderGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isNetworkError, setIsNetworkError] = useState(false);
   const navigate = useNavigate();
   const { config } = useTenant();
+
+  // Function to detect network errors
+  const isNetworkErrorType = (error: any): boolean => {
+    if (!error) return false;
+    
+    // Check for common network error indicators
+    if (error.code === 'NETWORK_ERROR') return true;
+    if (error.code === 'ERR_NETWORK') return true;
+    if (error.message?.includes('Network Error')) return true;
+    if (error.message?.includes('fetch')) return true;
+    if (error.name === 'NetworkError') return true;
+    
+    // Check for axios network errors
+    if (error.isAxiosError) {
+      if (!error.response) return true; // No response means network issue
+      if (error.code === 'ECONNABORTED') return true; // Timeout
+      if (error.code === 'ERR_NETWORK') return true;
+    }
+    
+    // Check for specific error status codes that indicate network issues
+    if (error.response?.status >= 500) return true; // Server errors
+    if (error.response?.status === 0) return true; // Network failure
+    
+    return false;
+  };
 
   // Load saved lender selection on component mount
   useEffect(() => {
@@ -65,11 +93,19 @@ const LenderSelection: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        setIsNetworkError(false);
         const response = await getLenders();
         setLenders(response.lender_groups);
       } catch (err) {
         console.error('Error fetching lenders:', err);
-        setError('Failed to load lenders. Please try again.');
+        const networkError = isNetworkErrorType(err);
+        setIsNetworkError(networkError);
+        
+        if (networkError) {
+          setError('Network connection issue. Please check your internet connection.');
+        } else {
+          setError('Failed to load lenders. Please try again.');
+        }
       } finally {
         setLoading(false);
       }
@@ -77,6 +113,30 @@ const LenderSelection: React.FC = () => {
 
     fetchLenders();
   }, []);
+
+  // Retry function to refetch lenders
+  const handleRetry = async () => {
+    setError(null);
+    setIsNetworkError(false);
+    setLoading(true);
+    
+    try {
+      const response = await getLenders();
+      setLenders(response.lender_groups);
+    } catch (err) {
+      console.error('Error fetching lenders on retry:', err);
+      const networkError = isNetworkErrorType(err);
+      setIsNetworkError(networkError);
+      
+      if (networkError) {
+        setError('Network connection issue. Please check your internet connection.');
+      } else {
+        setError('Failed to load lenders. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Auto-save selected lenders whenever they change
   useEffect(() => {
@@ -150,16 +210,55 @@ const LenderSelection: React.FC = () => {
         <Header />
         <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} flex="1" px={{ base: 4, sm: 6, lg: 8 }}>
           <VStack spacing={{ base: 4, md: 6 }} justify="center" minH="60vh">
-            <Alert status="error" borderRadius="lg">
-              <AlertIcon />
-              {error || 'Failed to load lenders. Please try again.'}
-            </Alert>
-            <Button 
-              onClick={() => window.location.reload()} 
-              colorScheme="blue"
-            >
-              Try Again
-            </Button>
+            {isNetworkError ? (
+              // Show maintenance image for network errors
+              <VStack spacing={6}>
+                <Center>
+                  <Image 
+                    src="/maintainence.png" 
+                    alt="Maintenance" 
+                    maxW={{ base: "300px", md: "400px" }}
+                    w="100%"
+                    h="auto"
+                  />
+                </Center>
+                <VStack spacing={3} textAlign="center">
+                  <Text fontSize="xl" fontWeight="bold" color="gray.800">
+                    We're experiencing technical difficulties
+                  </Text>
+                  <Text fontSize="md" color="gray.600" maxW="md">
+                    Please check your internet connection and try again in a few moments.
+                  </Text>
+                </VStack>
+                <Button 
+                  onClick={handleRetry} 
+                  bg={config.accentColor}
+                  color='white'
+                  size="lg"
+                  borderRadius="full"
+                  isLoading={loading}
+                  loadingText="Retrying..."
+                >
+                  Try Again
+                </Button>
+              </VStack>
+            ) : (
+              // Show regular error alert for other errors
+              <VStack spacing={4}>
+                <Alert status="error" borderRadius="lg">
+                  <AlertIcon />
+                  {error || 'Failed to load lenders. Please try again.'}
+                </Alert>
+                <Button 
+                  onClick={handleRetry} 
+                  colorScheme="blue"
+                  isLoading={loading}
+                  loadingText="Retrying..."
+                >
+                  Try Again
+                </Button>
+              </VStack>
+            )}
           </VStack>
         </Container>
         <Footer />

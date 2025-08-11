@@ -188,7 +188,10 @@ const AdditionalInfoModal: React.FC<AdditionalInfoModalProps> = ({
             </Center>
           ) : (
             <VStack spacing={{ base: 4, md: 6 }} align="stretch">
-              {requirements.map((requirement, index) => {
+              {requirements
+                // Completely filter out signature requirements - they should never appear in document upload modal
+                .filter((requirement) => requirement.requirement_type !== 'signature')
+                .map((requirement, index) => {
                 const statusStyle = getStatusColor(requirement.status);
                 const isUploading = uploadingFiles.has(requirement.id);
                 const isNewRequirement = requirement.status === 'pending' && !requirement.document;

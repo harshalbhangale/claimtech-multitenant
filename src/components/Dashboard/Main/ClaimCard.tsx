@@ -13,7 +13,9 @@ import { ArrowRightIcon, ExclamationCircleIcon } from '@heroicons/react/24/outli
 import Button from '../../Onboarding/Common/CustomButton';
 import { useTenant } from '../../../contexts/TenantContext';
 import { AgreementDetailsModal } from './Modals/AgreementModal';
-import AdditionalInfoModal from './Modals/AdditionalInfoModal';
+import AdditionalInfoModal from './Modals/RequirementInfoModal';
+import SignatureModal from './Modals/SignatureModal';
+import { useRequirements } from '../../../hooks/queries/useRequirements';
 
 interface ClaimCardProps {
   lender: string;
@@ -22,7 +24,7 @@ interface ClaimCardProps {
   onUploadId(): void;
   onProvideDetails(): void;
   id: string;
-  hasAdditionalRequirements?: boolean; // Add prop to control additional requirements visibility
+  hasAdditionalRequirements?: boolean;
   agreements?: any[];
   agreementsLoading?: boolean;
 }
@@ -39,6 +41,24 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
   const { config } = useTenant();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdditionalInfoModalOpen, setIsAdditionalInfoModalOpen] = useState(false);
+  const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
+  const [selectedSignatureRequirement, setSelectedSignatureRequirement] = useState<any>(null);
+
+  // Fetch requirements to determine button visibility
+  const { data: requirements = [] } = useRequirements(id);
+
+  // Separate requirements by type - include 'rejected' status for retry scenarios
+  const documentRequirements = requirements.filter(req => 
+    (req.status === 'pending' || req.status === 'rejected') && 
+    (req.requirement_type === 'document' || req.requirement_type === 'information' || req.requirement_type === undefined)
+  );
+  const signatureRequirements = requirements.filter(req => 
+    (req.status === 'pending' || req.status === 'rejected') && 
+    req.requirement_type === 'signature'
+  );
+
+  const hasDocumentRequirements = documentRequirements.length > 0;
+  const hasSignatureRequirements = signatureRequirements.length > 0;
 
   const handleProvideDetails = () => {
     setIsModalOpen(true);
@@ -49,10 +69,25 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
     setIsAdditionalInfoModalOpen(true);
   };
 
+  const handleSignatureRequired = () => {
+    // Get the first pending signature requirement
+    const signatureReq = signatureRequirements[0];
+    if (signatureReq) {
+      setSelectedSignatureRequirement(signatureReq);
+      setIsSignatureModalOpen(true);
+    }
+  };
+
+  const handleSignatureSuccess = () => {
+    // Clear selected requirement - cache will be automatically invalidated by mutations
+    setSelectedSignatureRequirement(null);
+    setIsSignatureModalOpen(false);
+  };
+
   return (
     <>
       <Box border="1.5px solid #E2E8F0" borderRadius="lg" p={5} position="relative">
-        {hasAdditionalRequirements && (
+        {(hasAdditionalRequirements || hasDocumentRequirements || hasSignatureRequirements) && (
           <Badge position="absolute" top="-10px" right="12px" bg="#FF004D" color="white" fontSize="xs" borderRadius="full" px={3} py={1}>
             Action required
           </Badge>
@@ -95,7 +130,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
           </Text>
         </HStack>
 
-                 <ClaimProgress currentStep={1}/>
+        <ClaimProgress currentStep={1}/>
          <Box h={4} />
 
          {/* Agreement Cards */}
@@ -166,16 +201,16 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
               </Button>
             </Box>
 
-            {/* Additional Requirements - Only show when needed */}
-            {hasAdditionalRequirements && (
+            {/* Document Upload Requirements - Show when staff requests document upload */}
+            {(hasAdditionalRequirements || hasDocumentRequirements) && (
             <Box>
               <HStack mb={3}>
                 <Circle size="24px" bg={config.accentLightColor} color={config.accentColor}>
                   <ExclamationCircleIcon width={14} height={14} strokeWidth={2} />
                 </Circle>
                 <Box>
-                  <Text fontWeight="bold" fontSize="sm">Additional information required</Text>
-                  <Text fontSize="sm">Please provide the requested details</Text>
+                  <Text fontWeight="bold" fontSize="sm">Additional documents required</Text>
+                  <Text fontSize="sm">Please upload the requested documents</Text>
                 </Box>
               </HStack>
               <Button
@@ -188,11 +223,39 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
                 fontFamily="Poppins"
                 onClick={handleProvideAdditionalInfo}
               >
-                Urgent Requirements
+                Upload Documents
                 <ArrowRightIcon width={14} height={14} strokeWidth={3} />
               </Button>
             </Box>
-                  )}
+            )}
+
+            {/* Signature Requirements - Only show when staff requests signature */}
+            {hasSignatureRequirements && (
+            <Box>
+              <HStack mb={3}>
+                <Circle size="24px" bg={config.accentLightColor} color={config.accentColor}>
+                  <ExclamationCircleIcon width={14} height={14} strokeWidth={2} />
+                </Circle>
+                <Box>
+                  <Text fontWeight="bold" fontSize="sm">Digital signature required</Text>
+                  <Text fontSize="sm">Please provide your digital signature</Text>
+                </Box>
+              </HStack>
+              <Button
+                w="full"
+                color="black"
+                _hover={{ bg: `${config.primaryColor}80` }}
+                borderRadius="full"
+                gap={1}
+                height="48px"
+                fontFamily="Poppins"
+                onClick={handleSignatureRequired}
+              >
+                Update Signature
+                <ArrowRightIcon width={14} height={14} strokeWidth={3} />
+              </Button>
+            </Box>
+            )}
           </VStack>
 
       </Box>
@@ -207,6 +270,16 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
         isOpen={isAdditionalInfoModalOpen}
         onClose={() => setIsAdditionalInfoModalOpen(false)}
         claimId={id}
+      />
+
+      <SignatureModal
+        isOpen={isSignatureModalOpen}
+        onClose={() => setIsSignatureModalOpen(false)}
+        requirementReason={selectedSignatureRequirement?.requirement_reason || 'Digital signature required'}
+        onSuccess={handleSignatureSuccess}
+        mode="dashboard"
+        claimId={id}
+        requirementId={selectedSignatureRequirement?.id}
       />
     </>
   );
