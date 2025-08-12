@@ -1,14 +1,16 @@
 import { Box, VStack, Text, HStack, Button, Icon, Container, useToast } from '@chakra-ui/react';
-import { DocumentCheckIcon, ArrowRightOnRectangleIcon, ChevronRightIcon, CheckIcon, ArrowDownTrayIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { DocumentCheckIcon, ArrowRightOnRectangleIcon, ChevronRightIcon, CheckIcon, ArrowDownTrayIcon, PencilIcon, ExclamationTriangleIcon, DocumentIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
 import { useTenant } from '../../../contexts/TenantContext';
 import { downloadIDDocument } from '../../../api/services/dashboard/downloadIDDocument';
+import { useIDDocumentStatus } from '../../../hooks/queries/useIDDocumentStatus';
 
 const Profile = () => {
   const { config } = useTenant();
   const [isDownloading, setIsDownloading] = useState(false);
   const toast = useToast();
+  const { data: hasIDDocument, isLoading: isCheckingID } = useIDDocumentStatus();
   // const [ setSelectedFile] = useState<File | null>(null);
 
   const handleDownloadDocument = async () => {
@@ -38,6 +40,8 @@ const Profile = () => {
   const handleUpdateDocument = () => {
     window.location.href = '/dashboard/documentupload';
   };
+
+
 
   // File select logic is kept but not used, as upload is coming soon
   // const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -374,69 +378,119 @@ const Profile = () => {
         </VStack>
       </Box> */}
 
-      {/* ID Document */}
-      <Box 
-        bg="white" 
-        p={6} 
-        borderRadius="xl" 
-        mb={8}
-        border="1.5px solid"
-        borderColor="gray.100"
-        boxShadow="sm"
-      >
-        <HStack justify="space-between" mb={0}>
-          <Text fontWeight="bold" fontFamily="Poppins" fontSize="lg">
-            ID Document
-          </Text>
-        </HStack>
-        <VStack spacing={4} align="stretch" mt={6}>
-          <HStack 
-            p={4} 
-            bg="green.50" 
-            borderRadius="lg" 
-            border="1px solid" 
-            borderColor="green.200"
-            justify="center"
-          >
-            <Icon as={CheckIcon} w={5} h={5} color="green.500" />
-            <Text fontSize="sm" color="green.700" fontFamily="Poppins" fontWeight="medium">
-              ID document uploaded successfully
+      {/* ID Document - Only show if document exists */}
+      {!isCheckingID && hasIDDocument && (
+        <Box 
+          bg="white" 
+          p={6} 
+          borderRadius="xl" 
+          mb={8}
+          border="1.5px solid"
+          borderColor="gray.100"
+          boxShadow="sm"
+        >
+          <HStack justify="space-between" mb={0}>
+            <Text fontWeight="bold" fontFamily="Poppins" fontSize="lg">
+              ID Document
             </Text>
           </HStack>
-          <HStack spacing={3}>
-            <Button
-              flex={1}
-              variant="outline"
-              color={config.accentColor}
-              borderColor={config.accentColor}
-              borderRadius="full"
-              fontFamily="Poppins"
-              fontWeight="semibold"
-              leftIcon={<Icon as={ArrowDownTrayIcon} w={4} h={4} strokeWidth={2}/>}
-              onClick={handleDownloadDocument}
-              isLoading={isDownloading}
-              loadingText="Downloading..."
-              _hover={{ bg: config.accentLightColor }}
+          <VStack spacing={4} align="stretch" mt={6}>
+            <HStack 
+              p={4} 
+              bg="green.50" 
+              borderRadius="lg" 
+              border="1px solid" 
+              borderColor="green.200"
+              justify="center"
             >
-              Download
-            </Button>
+              <Icon as={CheckIcon} w={5} h={5} color="green.500" />
+              <Text fontSize="sm" color="green.700" fontFamily="Poppins" fontWeight="medium">
+                ID document uploaded successfully
+              </Text>
+            </HStack>
+            <HStack spacing={3}>
+              <Button
+                flex={1}
+                variant="outline"
+                color={config.accentColor}
+                borderColor={config.accentColor}
+                borderRadius="full"
+                fontFamily="Poppins"
+                fontWeight="semibold"
+                leftIcon={<Icon as={ArrowDownTrayIcon} w={4} h={4} strokeWidth={2}/>}
+                onClick={handleDownloadDocument}
+                isLoading={isDownloading}
+                loadingText="Downloading..."
+                _hover={{ bg: config.accentLightColor }}
+              >
+                Download
+              </Button>
+              <Button
+                flex={1}
+                variant="solid"
+                bg={config.accentColor}
+                color="white"
+                borderRadius="full"
+                fontFamily="Poppins"
+                fontWeight="semibold"
+                leftIcon={<Icon as={PencilIcon} w={4} h={4} strokeWidth={2}/>}
+                onClick={handleUpdateDocument}
+                _hover={{ bg: `${config.accentColor}80` }}
+              >
+                Update
+              </Button>
+            </HStack>
+          </VStack>
+        </Box>
+      )}
+
+      {/* ID Document Upload Section - Show when no document exists */}
+      {!isCheckingID && !hasIDDocument && (
+        <Box 
+          bg="white" 
+          p={6} 
+          borderRadius="xl" 
+          mb={8}
+          border="1.5px solid"
+          borderColor="gray.100"
+          boxShadow="sm"
+        >
+          <HStack justify="space-between" mb={0}>
+            <Text fontWeight="bold" fontFamily="Poppins" fontSize="lg">
+              ID Document
+            </Text>
+          </HStack>
+          <VStack spacing={4} align="stretch" mt={6}>
+            <HStack 
+              p={4} 
+              bg="orange.50" 
+              borderRadius="lg" 
+              border="1px solid" 
+              borderColor="orange.200"
+              justify="center"
+            >
+              <Icon as={ExclamationTriangleIcon} w={5} h={5} color="orange.500" />
+              <Text fontSize="sm" color="orange.700" fontFamily="Poppins" fontWeight="medium">
+                No ID uploaded - Upload required to access all features
+              </Text>
+            </HStack>
             <Button
-              flex={1}
+              w="full"
               variant="solid"
               bg={config.accentColor}
               color="white"
               borderRadius="full"
               fontFamily="Poppins"
               fontWeight="semibold"
-              leftIcon={<Icon as={PencilIcon} w={4} h={4} strokeWidth={2}/>}
+              leftIcon={<Icon as={DocumentIcon} w={4} h={4} strokeWidth={2}/>}
               onClick={handleUpdateDocument}
               _hover={{ bg: `${config.accentColor}80` }}
             >
-              Update
+              Upload ID Document
             </Button>
-          </HStack>
-        </VStack>
-      </Box>
+          </VStack>
+        </Box>
+      )}
 
       {/* Continue Button */}
       <Button
