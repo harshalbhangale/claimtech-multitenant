@@ -1,5 +1,5 @@
 import { VStack, Heading, Text, Button, Image, SimpleGrid, Box, Icon, HStack, Input, Container } from '@chakra-ui/react';
-import { IdentificationIcon, InformationCircleIcon, LockClosedIcon,  ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { IdentificationIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { useState, useRef } from 'react';
 import { DocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
 

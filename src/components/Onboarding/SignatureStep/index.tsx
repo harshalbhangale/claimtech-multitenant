@@ -6,7 +6,6 @@ import {
   Text,
   HStack,
   Flex,
-  Image,
   Button as ChakraButton,
 } from '@chakra-ui/react';
 // @ts-ignore - library lacks type definitions
@@ -17,10 +16,8 @@ import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import Button from '../Common/CustomButton';
-import SuccessMessage from '../Common/SuccessMessage';
-import WarningMessage from '../Common/WarningMessage';
-import ErrorMessage from '../Common/ErrorMessage';
-import { saveSignature, getSavedSignature, clearSignature } from '../../../utils/signatureStorage';
+
+import { saveSignature, clearSignature } from '../../../utils/signatureStorage';
 import { submitSignature, canvasToFile } from '../../../api/services/onboarding/submitSignature';
 import { ensureCheckioScript } from '../../../utils/checkioFingerprint';
 import { startPcpCreditReport } from '../../../api/services/onboarding/checkio';
@@ -38,7 +35,7 @@ const SignatureStep: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 200 });
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [claimAmount, setClaimAmount] = useState<string>('£6,427*');

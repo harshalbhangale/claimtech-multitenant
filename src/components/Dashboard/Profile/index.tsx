@@ -1,4 +1,4 @@
-import { Box, VStack, Text, HStack, Button, Icon, Badge, Container, useToast } from '@chakra-ui/react';
+import { Box, VStack, Text, HStack, Button, Icon, Container, useToast } from '@chakra-ui/react';
 import { DocumentCheckIcon, ArrowRightOnRectangleIcon, ChevronRightIcon, CheckIcon, ArrowDownTrayIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 

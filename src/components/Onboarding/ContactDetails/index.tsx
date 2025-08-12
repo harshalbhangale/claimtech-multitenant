@@ -35,7 +35,7 @@ const ContactDetails: React.FC = () => {
   const [touched, setTouched] = useState({ mobile: false, email: false });
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [, setSuccess] = useState<string | null>(null);
 
   // Load saved contact details on component mount
   useEffect(() => {

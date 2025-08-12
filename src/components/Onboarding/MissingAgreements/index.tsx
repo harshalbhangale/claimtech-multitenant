@@ -10,7 +10,6 @@ import {
   Flex,
   Collapse,
   Icon,
-  Image,
   Spinner,
   Alert,
   AlertIcon,
