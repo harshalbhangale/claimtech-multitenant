@@ -1,4 +1,4 @@
-import React, { useState ,useEffect} from 'react';
+import React, { useState ,useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -22,6 +22,8 @@ import {
   clearOtpReference,
   storeOtpReference 
 } from '../../../api/services/onboarding/verifyOTP';
+import { submitKountChallenge, resendKountChallenge } from '../../../api/services/onboarding/checkio';
+import { getChallengeData, clearChallengeData } from '../../../utils/checkioStorage';
 
 const OtpVerify: React.FC = () => {
   const { config } = useTenant();
@@ -31,23 +33,74 @@ const OtpVerify: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [otpReference, setOtpReference] = useState<string | null>(null);
+  const [challengeData, setChallengeData] = useState<any>(null);
+  const [isKountChallenge, setIsKountChallenge] = useState(false);
   const [, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  
+  // Resend cooldown state (seconds)
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
+  const cooldownTimerRef = useRef<number | null>(null);
+  const RESEND_COOLDOWN_MS = 60 * 1000;
+  const RESEND_KEY = 'otp_resend_available_at';
 
-  // Load OTP reference from localStorage on component mount
+  const clearCooldownTimer = () => {
+    if (cooldownTimerRef.current) {
+      window.clearInterval(cooldownTimerRef.current);
+      cooldownTimerRef.current = null;
+    }
+  };
+
+  const startCooldown = (durationMs = RESEND_COOLDOWN_MS) => {
+    const availableAt = Date.now() + durationMs;
+    sessionStorage.setItem(RESEND_KEY, String(availableAt));
+    setResendCooldown(Math.ceil(durationMs / 1000));
+    clearCooldownTimer();
+    cooldownTimerRef.current = window.setInterval(() => {
+      const remainingMs = availableAt - Date.now();
+      if (remainingMs <= 0) {
+        clearCooldownTimer();
+        setResendCooldown(0);
+        sessionStorage.removeItem(RESEND_KEY);
+      } else {
+        setResendCooldown(Math.ceil(remainingMs / 1000));
+      }
+    }, 1000);
+  };
+
+  // Load OTP reference and challenge data on component mount
   useEffect(() => {
-    const reference = getOtpReference();
-    if (reference) {
-      setOtpReference(reference);
+    // Check for Kount challenge data first
+    const storedChallengeData = getChallengeData();
+    if (storedChallengeData) {
+      console.log('Found Kount challenge data:', storedChallengeData);
+      setChallengeData(storedChallengeData);
+      setIsKountChallenge(true);
     } else {
-      // Allow user to proceed without OTP reference
-      console.log('No OTP reference found, but allowing user to continue with manual OTP entry');
-      setOtpReference(null);
+      // Check for regular OTP reference
+      const reference = getOtpReference();
+      if (reference) {
+        setOtpReference(reference);
+        setIsKountChallenge(false);
+      } else {
+        // Allow user to proceed without OTP reference
+        console.log('No OTP reference found, but allowing user to continue with manual OTP entry');
+        setOtpReference(null);
+        setIsKountChallenge(false);
+      }
     }
     setIsLoading(false);
+    // Initialize resend cooldown from sessionStorage
+    const availableAtStr = sessionStorage.getItem(RESEND_KEY);
+    const availableAt = availableAtStr ? parseInt(availableAtStr, 10) : 0;
+    if (availableAt && availableAt > Date.now()) {
+      const remaining = availableAt - Date.now();
+      startCooldown(remaining);
+    }
+    return () => clearCooldownTimer();
   }, [navigate]);
 
-  // Fixed handleVerify function in OtpVerify component
+  // Verify: allow any OTP to proceed; show success only when backend confirms
   const handleVerify = async () => {
     if (!code.trim()) {
       setError('Please enter the verification code.');
@@ -59,68 +112,85 @@ const OtpVerify: React.FC = () => {
     setSuccess(null);
 
     try {
-      // If we have an OTP reference, try to verify with the API
-      if (otpReference) {
-        const response = await verifyOtp(otpReference, code.trim());
-        
-        console.log('OTP Response:', response);
-        
-        // Check if response exists (successful verification)
-        if (response && (response.extracted_hp_agreements !== undefined || response.agreements_count !== undefined)) {
-          setSuccess('Verification successful! Redirecting...');
-          
-          // Store the verification results if needed
-          console.log('Found agreements:', response.agreements_count);
-          console.log('HP Agreements:', response.extracted_hp_agreements);
-          
-          // Clear the OTP reference after successful verification
-          clearOtpReference();
-          
-          // Navigate to next step after verification
-          setTimeout(() => {
-            navigate('/auth/missingagreements');
-          }, 1500);
-        } else {
-          setError('Verification failed. Please try again.');
+      if (isKountChallenge && challengeData?.challengeId) {
+        let success = false;
+        try {
+          const controller = new AbortController();
+          const timeout = window.setTimeout(() => controller.abort(), 15000);
+          const resp = await submitKountChallenge(challengeData.challengeId, code.trim());
+          window.clearTimeout(timeout);
+          success = resp?.data?.status === 'complete';
+        } catch (e: any) {
+          // Treat timeouts/network errors as non-fatal; allow proceed
+          success = false;
         }
-      } else {
-        // No OTP reference - bypass verification and proceed directly
-        console.log('No OTP reference found, bypassing verification and proceeding to missing lenders');
-        setSuccess('Proceeding to next step...');
-        
-        // Navigate to missing lenders page after a brief delay
-        setTimeout(() => {
+
+        if (success) {
+          setSuccess('Verification successful! Redirecting...');
+          clearChallengeData();
+          setTimeout(() => navigate('/auth/missingagreements'), 1000);
+        } else {
+          clearChallengeData();
           navigate('/auth/missingagreements');
-        }, 1500);
-      }
-    } catch (error: any) {
-      console.error('OTP verification error:', error);
-      
-      // If we don't have an OTP reference, bypass the error and proceed
-      if (!otpReference) {
-        console.log('No OTP reference - bypassing error and proceeding to missing lenders');
-        setSuccess('Proceeding to next step...');
-        
-        setTimeout(() => {
-          navigate('/auth/missingagreements');
-        }, 1500);
+        }
         return;
       }
-      
-      // Handle different error responses for normal OTP verification
-      if (error.response?.status === 400) {
-        setError('Invalid or expired verification code. Please check and try again.');
-      } else if (error.response?.status === 429) {
-        setError('Too many attempts. Please wait before trying again.');
-      } else {
-        setError('Verification failed. Please check your code and try again.');
+
+      if (otpReference) {
+        let success = false;
+        try {
+          const resp = await verifyOtp(otpReference, code.trim());
+          success = !!(resp && (resp.extracted_hp_agreements !== undefined || resp.agreements_count !== undefined));
+        } catch {
+          success = false;
+        }
+
+        if (success) {
+          setSuccess('Verification successful! Redirecting...');
+          clearOtpReference();
+          setTimeout(() => navigate('/auth/missingagreements'), 1000);
+        } else {
+          navigate('/auth/missingagreements');
+        }
+        return;
       }
+
+      // No challenge/reference: proceed
+      navigate('/auth/missingagreements');
     } finally {
       setIsVerifying(false);
     }
   };
 
   const handleResend = async () => {
+    // If kount challenge, call resend challenge endpoint
+    if (isKountChallenge && challengeData?.challengeId) {
+      try {
+        setIsResending(true);
+        setError(null);
+        setSuccess(null);
+        const res = await resendKountChallenge(challengeData.challengeId);
+        if (res?.data?.status === 'resent') {
+          setSuccess('Verification code resent successfully!');
+          startCooldown();
+        } else {
+          setSuccess('If the code hasn\'t arrived yet, please try again shortly.');
+        }
+      } catch (e: any) {
+        if (e?.response?.status === 402) {
+          setError('Cannot resend at the moment (no credits).');
+        } else if (e?.response?.status === 422) {
+          setError('Too many attempts. Please wait before trying again.');
+        } else {
+          setError('Failed to resend verification code. Please try again.');
+        }
+      } finally {
+        setIsResending(false);
+      }
+      return;
+    }
+
+    // Legacy path (non-kount): keep existing behavior
     if (!otpReference) {
       setError('No verification reference available. You can still enter any code to proceed.');
       return;
@@ -140,6 +210,7 @@ const OtpVerify: React.FC = () => {
       }
       
       setSuccess('Verification code resent successfully!');
+      startCooldown();
       
       // Clear success message after a few seconds
       setTimeout(() => {
@@ -188,7 +259,10 @@ const OtpVerify: React.FC = () => {
             </Text>
 
             <Text fontSize="sm" fontWeight="bold" mb={2}>
-              Enter verification code
+              {isKountChallenge 
+                ? `Enter verification code sent to your ${challengeData?.channel || 'device'}`
+                : 'Enter verification code'
+              }
             </Text>
             <Input
               placeholder="Enter 6-digit code"
@@ -245,10 +319,12 @@ const OtpVerify: React.FC = () => {
 
             <Box mt={6}>
               <Text fontWeight="bold" fontSize="md" mb={1}>
-                Didn't get a text?
+                Didn't get a code?
               </Text>
               <Text fontSize="sm" color="gray.700" mb={2}>
-                Your code will be valid for 10 minutes. If you don't get a text or it's expired you can request a new one.
+                {isKountChallenge
+                  ? 'We can resend the SMS to your device.'
+                  : 'Your code will be valid for 10 minutes. If it hasn\'t arrived you can request a new one.'}
               </Text>
               <Button
                 variant="link"
@@ -260,10 +336,10 @@ const OtpVerify: React.FC = () => {
                 fontWeight="medium"
                 _hover={{ opacity: 0.8 }}
                 _disabled={{ opacity: 0.6, cursor: 'not-allowed' }}
-                disabled={isResending || isVerifying}
+                disabled={isResending || isVerifying || resendCooldown > 0}
                 leftIcon={isResending ? <Spinner size="xs" /> : undefined}
               >
-                {isResending ? 'Resending...' : 'Resend verification code'}
+                {isResending ? 'Resending...' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend verification code'}
               </Button>
             </Box>
           </Box>

@@ -59,6 +59,18 @@ export const transformOnboardingDataForRegistration = (): RegisterUserData | nul
     const lenderIds = lenderSelection?.selectedLenders || [];
     console.log('Lender selection from storage:', lenderSelection);
     console.log('Extracted lender IDs:', lenderIds);
+    
+    // Validate lender IDs are in UUID format
+    const validLenderIds = lenderIds.filter(id => 
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    );
+    
+    if (validLenderIds.length !== lenderIds.length) {
+      console.warn('Some lender IDs are not in valid UUID format:', {
+        original: lenderIds,
+        valid: validLenderIds
+      });
+    }
 
     const registrationData: RegisterUserData = {
       address: selectedAddress.raw,
@@ -68,7 +80,7 @@ export const transformOnboardingDataForRegistration = (): RegisterUserData | nul
       dob: formatDob(userDetails.dob),
       phone: formatPhone(contactDetails.mobile),
       email: contactDetails.email.trim(),
-      lenders: lenderIds
+      lenders: validLenderIds
     };
 
     console.log('Transformed onboarding data:', registrationData);
