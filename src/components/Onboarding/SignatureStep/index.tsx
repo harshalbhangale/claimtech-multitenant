@@ -22,7 +22,7 @@ import { submitSignature, canvasToFile } from '../../../api/services/onboarding/
 import { ensureCheckioScript } from '../../../utils/checkioFingerprint';
 import { startPcpCreditReport } from '../../../api/services/onboarding/checkio';
 import { storeChallengeData } from '../../../utils/checkioStorage';
-import { getLenderSelection } from '../../../utils/onboardingStorage';
+import { getLenderSelection, getUserDetails } from '../../../utils/onboardingStorage';
 import Trustpilot from '../Common/Trustpilot';
 
 const SignatureStep: React.FC = () => {
@@ -39,6 +39,7 @@ const SignatureStep: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [claimAmount, setClaimAmount] = useState<string>('£6,427*');
+  const [firstName, setFirstName] = useState<string>('');
 
   // Calculate responsive canvas dimensions
   const updateCanvasDimensions = () => {
@@ -64,8 +65,15 @@ const SignatureStep: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Calculate claim amount based on selected lenders
+  // Load user details and calculate claim amount based on selected lenders
   useEffect(() => {
+    // Load user's firstName
+    const userDetails = getUserDetails();
+    if (userDetails?.firstName) {
+      setFirstName(userDetails.firstName);
+    }
+
+    // Calculate claim amount
     const lenderSelection = getLenderSelection();
     const selectedLenderCount = lenderSelection?.selectedLenders?.length || 0;
     
@@ -305,7 +313,7 @@ const SignatureStep: React.FC = () => {
           {/* Main Card */}
           <Box border="1.5px solid #E2E8F0" borderRadius="2xl" p={6} w="full">
             <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="gray.900" fontFamily="Poppins">
-              Great news, !
+              Great news{firstName ? `, ${firstName}` : ''}!
             </Text>
             <Flex align="center" mb={2} flexWrap="wrap" gap={1}>
               <Text fontSize={{ base: 'sm', md: 'sm' }} color="gray.900" fontWeight="bold" fontFamily="Poppins">
