@@ -22,6 +22,9 @@ import WarningMessage from '../Common/WarningMessage';
 import ErrorMessage from '../Common/ErrorMessage';
 import { saveSignature, getSavedSignature, clearSignature } from '../../../utils/signatureStorage';
 import { submitSignature, canvasToFile } from '../../../api/services/onboarding/submitSignature';
+import { ensureCheckioScript } from '../../../utils/checkioFingerprint';
+import { startPcpCreditReport } from '../../../api/services/onboarding/checkio';
+import { storeChallengeData } from '../../../utils/checkioStorage';
 
 const SignatureStep: React.FC = () => {
   const sigCanvasRef = useRef<any>(null);
@@ -162,12 +165,60 @@ const SignatureStep: React.FC = () => {
       
       console.log('Signature upload response:', response);
 
-      setSuccess("Signature uploaded successfully! Redirecting...");
+      setSuccess("Signature uploaded successfully! Processing credit report...");
       
-      // Navigate to next step after a brief delay
-      setTimeout(() => {
-        navigate('/auth/previousaddresses');
-      }, 1500);
+      // After successful signature upload, embed fingerprint script and capture sessionId
+      try {
+        const sessionId = await ensureCheckioScript();
+        console.log('Checkio sessionId:', sessionId);
+        
+        // Start PCP credit report using captured sessionId
+        const creditReportResponse = await startPcpCreditReport(sessionId);
+        
+        if (creditReportResponse.status === 'complete') {
+          // Credit report completed successfully
+          console.log('Credit report completed successfully');
+          setSuccess("Credit report processed successfully! Redirecting...");
+          
+          setTimeout(() => {
+            navigate('/auth/missingagreements');
+          }, 1500);
+          
+        } else if (creditReportResponse.status === 'authentication-required') {
+          // Authentication required - redirect to OTP verification
+          console.log('Authentication required for credit report');
+          const challengeId = creditReportResponse.kount?.challengeId 
+            || creditReportResponse.kountChallenge?.challengeId 
+            || '';
+          storeChallengeData({ challengeId, channel: creditReportResponse.kount?.channel });
+          
+          setSuccess("Signature uploaded successfully! Verification required...");
+          
+          setTimeout(() => {
+            navigate('/auth/otpverify');
+          }, 1500);
+          
+        } else {
+          throw new Error('Unexpected credit report response');
+        }
+        
+      } catch (creditReportError: any) {
+        console.error('Credit report failed:', creditReportError);
+        
+        // Show specific error message based on error type
+        let errorMessage = 'Credit report processing failed. ';
+        if (creditReportError.name === 'CreditReportError') {
+          errorMessage += creditReportError.message;
+        } else if (creditReportError.message?.includes('sessionId')) {
+          errorMessage += 'Device verification failed. Please try again.';
+        } else {
+          errorMessage += 'Please contact support if this continues.';
+        }
+        
+        setError(errorMessage);
+        setIsLoading(false);
+        return; // Don't proceed - require user to retry
+      }
       
     } catch (error: any) {
       console.error('Error uploading signature:', error);
