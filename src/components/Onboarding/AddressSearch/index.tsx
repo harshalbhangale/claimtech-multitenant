@@ -71,7 +71,7 @@ const AddressSearch: React.FC = () => {
       try {
         const rawResults = await fetchAddressesByPostcode(pc);
         const formatted = rawResults.map((item, idx) => {
-          const parts = [
+          const allParts = [
             item.address1,
             item.address2,
             item.address3,
@@ -82,10 +82,26 @@ const AddressSearch: React.FC = () => {
             item.postcode,
           ].filter(Boolean);
 
+          // Create 4-line display format: first 3 address lines + postcode
+          const addressLines = [
+            item.address1,
+            item.address2,
+            item.address3,
+            item.address4,
+            item.address5,
+            item.city,
+            item.region,
+          ].filter(Boolean);
+          
+          const displayParts = [
+            ...addressLines.slice(0, 3), // First 3 address components
+            item.postcode // Always include postcode as 4th line
+          ].filter(Boolean);
+
           return {
             id: idx,
-            label: parts.join(', '),
-            lines: parts.join('\n'),
+            label: allParts.join(', '), // Keep full label for dropdown
+            lines: displayParts.join('\n'), // Show first 3 lines + postcode
             address_id: item.address_id,
           };
         });
@@ -116,11 +132,19 @@ const AddressSearch: React.FC = () => {
     navigate('/auth/contactdetails');
   };
 
+  // Handle Enter key press to trigger address search
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleFind();
+    }
+  };
+
   return (
     <Box minH="100vh" bg="white" w="100%">
       <Header />
 
-      <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 4, sm: 6, lg: 8 }}>
+      <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
         <VStack spacing={{ base: 4, md: 6 }} align="stretch">
           {/* Progress Indicator */}
           <ProgressBar currentStep={3} totalSteps={4} />
@@ -143,6 +167,7 @@ const AddressSearch: React.FC = () => {
                 flex="3"
                 value={postcode}
                 onChange={(e) => setPostcode(e.target.value)}
+                onKeyDown={handleKeyDown}
                 bg="white"
                 border="1px solid"
                 borderColor="gray.300"
@@ -237,7 +262,11 @@ const AddressSearch: React.FC = () => {
             <NextButton onClick={handleNext} label="Next step" />
 
             {/* Trustpilot */}
-            <Trustpilot size="md" />
+            <VStack spacing={4} align="center">
+              {/* Trustpilot Rating */}
+              <Trustpilot size="md" />
+
+            </VStack>
           </Box>
           <Box w="full" maxW={{ base: 'full', md: '2xl' }}>
             <SecureBar />

@@ -1,12 +1,43 @@
-import { Box, VStack, Text, HStack, Button, Input, SimpleGrid, Icon, Radio, RadioGroup, Badge } from '@chakra-ui/react';
-import { DocumentCheckIcon, GiftIcon, ArrowRightOnRectangleIcon, ChevronRightIcon, CheckIcon, DocumentIcon } from '@heroicons/react/24/outline';
+import { Box, VStack, Text, HStack, Button, Icon, Container, useToast } from '@chakra-ui/react';
+import { DocumentCheckIcon, ArrowRightOnRectangleIcon, ChevronRightIcon, CheckIcon, ArrowDownTrayIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { useState } from 'react';
 
 import { useTenant } from '../../../contexts/TenantContext';
+import { downloadIDDocument } from '../../../api/services/dashboard/downloadIDDocument';
 
 const Profile = () => {
   const { config } = useTenant();
+  const [isDownloading, setIsDownloading] = useState(false);
+  const toast = useToast();
   // const [ setSelectedFile] = useState<File | null>(null);
-  // const toast = useToast();
+
+  const handleDownloadDocument = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadIDDocument();
+      toast({
+        title: "Document downloaded",
+        description: "Your ID document has been downloaded successfully",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "Failed to download your ID document. Please try again.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleUpdateDocument = () => {
+    window.location.href = '/dashboard/documentupload';
+  };
 
   // File select logic is kept but not used, as upload is coming soon
   // const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,9 +74,9 @@ const Profile = () => {
   // };
 
   return (
-    <Box p={8} maxW="2xl" mx="auto">
+    <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
       {/* Account Details Section */}
-      <Text color="gray.700" mb={2} fontSize="md" fontWeight="bold">
+      <Text color="gray.700" mb={2} mt={10} fontSize="md" fontWeight="bold">
         Account details
       </Text>
 
@@ -82,17 +113,14 @@ const Profile = () => {
                 <Icon as={DocumentCheckIcon} w={6} h={6} color={config.accentColor} />
               </Box>
               <Text fontFamily="Poppins" fontSize="lg" fontWeight="medium">
-                Open Claim
-                <Box as="span" ml={3} color={config.accentColor} fontWeight="semibold">
-                  1
-                </Box>
+                Open Claims
               </Text>
             </HStack>
             <Icon as={ChevronRightIcon} w={6} h={6} color="gray.400" />
           </HStack>
         </Box>
         {/* Refer a Friend - Coming Soon */}
-        <Box
+        {/* <Box
           as="button"
           bg="gray.50"
           p={5}
@@ -130,7 +158,7 @@ const Profile = () => {
             </HStack>
             <Icon as={ChevronRightIcon} w={6} h={6} color="gray.300" />
           </HStack>
-        </Box>
+        </Box> */}
         {/* Log out */}
         <Box
           as="button"
@@ -169,7 +197,7 @@ const Profile = () => {
         </Box>
       </VStack>
 
-      {/* Your Details Section */}
+      {/* Your Details Section
       <HStack justify="space-between" align="center" mb={6}>
         <Text color= "gray.700" fontSize="md" fontWeight="bold">
           Your details
@@ -190,117 +218,117 @@ const Profile = () => {
             Coming Soon
           </Badge>
         </Button>
-      </HStack>
+      </HStack> */}
 
-      {/* Contact Details - Dummy Values */}
-      <VStack spacing={4} mb={10} align="stretch">
-        <Input
-          value="example@email.com"
-          isReadOnly
-          bg="white"
-          borderRadius="lg"
-          fontSize="md"
-          fontFamily="Poppins"
-          size="lg"
-          border="1.5px solid"
-          borderColor="gray.200"
-          _hover={{ borderColor: 'gray.300' }}
-        />
-        <Input
-          value="+44 7123 456789"
-          isReadOnly
-          bg="white"
-          borderRadius="lg"
-          fontSize="md"
-          fontFamily="Poppins"
-          size="lg"
-          border="1.5px solid"
-          borderColor="gray.200"
-          _hover={{ borderColor: 'gray.300' }}
-        />
-        <Input
-          value="123 Example Street"
-          isReadOnly
-          bg="white"
-          borderRadius="lg"
-          fontSize="md"
-          color="gray.700"
-          fontFamily="Poppins"
-          size="lg"
-          border="1.5px solid"
-          borderColor="gray.200"
-          _hover={{ borderColor: 'gray.300' }}
-        />
-        <Input
-          value="Apt 4B"
-          isReadOnly
-          bg="white"
-          borderRadius="lg"
-          fontSize="md"
-          fontFamily="Poppins"
-          size="lg"
-          border="1.5px solid"
-          borderColor="gray.200"
-          _hover={{ borderColor: 'gray.300' }}
-        />
-        <Input
-          value="AB12 3CD"
-          isReadOnly
-          bg="white"
-          borderRadius="lg"
-          fontSize="md"
-          fontFamily="Poppins"
-          size="lg"
-          border="1.5px solid"
-          borderColor="gray.200"
-          _hover={{ borderColor: 'gray.300' }}
-        />
-        <SimpleGrid columns={3} spacing={4}>
-          <Input
-            value="01"
-            isReadOnly
-            bg="white"
-            borderRadius="lg"
-            fontSize="md"
-            fontFamily="Poppins"
-            size="lg"
-            border="1.5px solid"
-            borderColor="gray.200"
-            _hover={{ borderColor: 'gray.300' }}
-          />
-          <Input
-            value="01"
-            isReadOnly
-            bg="white"
-            borderRadius="lg"
-            fontSize="md"
-            fontFamily="Poppins"
-            size="lg"
-            border="1.5px solid"
-            borderColor="gray.200"
-            _hover={{ borderColor: 'gray.300' }}
-          />
-          <Input
-            value="1990"
-            isReadOnly
-            bg="white"
-            borderRadius="lg"
-            fontSize="md"
-            fontFamily="Poppins"
-            size="lg"
-            border="1.5px solid"
-            borderColor="gray.200"
-            _hover={{ borderColor: 'gray.300' }}
-          />
-        </SimpleGrid>
-      </VStack>
+      {/* Contact Details - Dummy Values
+      // <VStack spacing={4} mb={10} align="stretch">
+      //   <Input
+      //     value="example@email.com"
+      //     isReadOnly
+      //     bg="white"
+      //     borderRadius="lg"
+      //     fontSize="md"
+      //     fontFamily="Poppins"
+      //     size="lg"
+      //     border="1.5px solid"
+      //     borderColor="gray.200"
+      //     _hover={{ borderColor: 'gray.300' }}
+      //   />
+      //   <Input
+      //     value="+44 7123 456789"
+      //     isReadOnly
+      //     bg="white"
+      //     borderRadius="lg"
+      //     fontSize="md"
+      //     fontFamily="Poppins"
+      //     size="lg"
+      //     border="1.5px solid"
+      //     borderColor="gray.200"
+      //     _hover={{ borderColor: 'gray.300' }}
+      //   />
+      //   <Input
+      //     value="123 Example Street"
+      //     isReadOnly
+      //     bg="white"
+      //     borderRadius="lg"
+      //     fontSize="md"
+      //     color="gray.700"
+      //     fontFamily="Poppins"
+      //     size="lg"
+      //     border="1.5px solid"
+      //     borderColor="gray.200"
+      //     _hover={{ borderColor: 'gray.300' }}
+      //   />
+      //   <Input
+      //     value="Apt 4B"
+      //     isReadOnly
+      //     bg="white"
+      //     borderRadius="lg"
+      //     fontSize="md"
+      //     fontFamily="Poppins"
+      //     size="lg"
+      //     border="1.5px solid"
+      //     borderColor="gray.200"
+      //     _hover={{ borderColor: 'gray.300' }}
+      //   />
+      //   <Input
+      //     value="AB12 3CD"
+      //     isReadOnly
+      //     bg="white"
+      //     borderRadius="lg"
+      //     fontSize="md"
+      //     fontFamily="Poppins"
+      //     size="lg"
+      //     border="1.5px solid"
+      //     borderColor="gray.200"
+      //     _hover={{ borderColor: 'gray.300' }}
+      //   />
+      //   <SimpleGrid columns={3} spacing={4}>
+      //     <Input
+      //       value="01"
+      //       isReadOnly
+      //       bg="white"
+      //       borderRadius="lg"
+      //       fontSize="md"
+      //       fontFamily="Poppins"
+      //       size="lg"
+      //       border="1.5px solid"
+      //       borderColor="gray.200"
+      //       _hover={{ borderColor: 'gray.300' }}
+      //     />
+      //     <Input
+      //       value="01"
+      //       isReadOnly
+      //       bg="white"
+      //       borderRadius="lg"
+      //       fontSize="md"
+      //       fontFamily="Poppins"
+      //       size="lg"
+      //       border="1.5px solid"
+      //       borderColor="gray.200"
+      //       _hover={{ borderColor: 'gray.300' }}
+      //     />
+      //     <Input
+      //       value="1990"
+      //       isReadOnly
+      //       bg="white"
+      //       borderRadius="lg"
+      //       fontSize="md"
+      //       fontFamily="Poppins"
+      //       size="lg"
+      //       border="1.5px solid"
+      //       borderColor="gray.200"
+      //       _hover={{ borderColor: 'gray.300' }}
+      //     />
+      //   </SimpleGrid>
+      </VStack> */}
+{/* 
 
-      {/* Account Settings */}
       <Text color="gray.700" fontSize="md" fontWeight="bold" mb={4}>
         Account settings
       </Text>
 
-      {/* Notifications */}
+
       <Box 
         bg="white" 
         p={6} 
@@ -344,9 +372,9 @@ const Profile = () => {
             </HStack>
           ))}
         </VStack>
-      </Box>
+      </Box> */}
 
-      {/* ID Document - Coming Soon */}
+      {/* ID Document */}
       <Box 
         bg="white" 
         p={6} 
@@ -359,42 +387,58 @@ const Profile = () => {
         <HStack justify="space-between" mb={0}>
           <Text fontWeight="bold" fontFamily="Poppins" fontSize="lg">
             ID Document
-            <Badge ml={3} colorScheme="yellow" borderRadius="full" px={2} fontSize="0.8em">
-              Coming Soon
-            </Badge>
           </Text>
         </HStack>
         <VStack spacing={4} align="stretch" mt={6}>
           <HStack 
             p={4} 
-            bg="gray.50" 
+            bg="green.50" 
             borderRadius="lg" 
-            border="1px dashed" 
-            borderColor="gray.200"
+            border="1px solid" 
+            borderColor="green.200"
             justify="center"
           >
-            <Icon as={DocumentIcon} w={5} h={5} color="gray.400" />
-            <Text fontSize="sm" color="gray.400" fontFamily="Poppins">
-              ID document upload coming soon
+            <Icon as={CheckIcon} w={5} h={5} color="green.500" />
+            <Text fontSize="sm" color="green.700" fontFamily="Poppins" fontWeight="medium">
+              ID document uploaded successfully
             </Text>
           </HStack>
-          <Button
-            w="full"
-            variant="outline"
-            color={config.accentColor}
-            borderColor={config.accentColor}
-            borderRadius="full"
-            fontFamily="Poppins"
-            fontWeight="semibold"
-            isDisabled
-            leftIcon={<Icon as={CheckIcon} w={4} h={4} strokeWidth={3}/>}
-          >
-            Upload Document
-          </Button>
+          <HStack spacing={3}>
+            <Button
+              flex={1}
+              variant="outline"
+              color={config.accentColor}
+              borderColor={config.accentColor}
+              borderRadius="full"
+              fontFamily="Poppins"
+              fontWeight="semibold"
+              leftIcon={<Icon as={ArrowDownTrayIcon} w={4} h={4} strokeWidth={2}/>}
+              onClick={handleDownloadDocument}
+              isLoading={isDownloading}
+              loadingText="Downloading..."
+              _hover={{ bg: config.accentLightColor }}
+            >
+              Download
+            </Button>
+            <Button
+              flex={1}
+              variant="solid"
+              bg={config.accentColor}
+              color="white"
+              borderRadius="full"
+              fontFamily="Poppins"
+              fontWeight="semibold"
+              leftIcon={<Icon as={PencilIcon} w={4} h={4} strokeWidth={2}/>}
+              onClick={handleUpdateDocument}
+              _hover={{ bg: `${config.accentColor}80` }}
+            >
+              Update
+            </Button>
+          </HStack>
         </VStack>
       </Box>
 
-      {/* Update Button */}
+      {/* Continue Button */}
       <Button
         w="full"
         bg={config.primaryColor}
@@ -407,11 +451,12 @@ const Profile = () => {
         fontSize="lg"
         fontWeight="semibold"
         boxShadow="sm"
+        onClick={() => window.location.href = '/dashboard'}
       >
-        Update 
-        <Icon as={CheckIcon} w={4} h={4} ml={1} strokeWidth={3}/>
+        Continue
+
       </Button>
-    </Box>
+    </Container>
   );
 };
 

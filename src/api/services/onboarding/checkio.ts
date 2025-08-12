@@ -4,9 +4,8 @@ export interface CreditReportResponse {
   status: 'complete' | 'authentication-required';
   providerId?: string;
   searchType?: string;
-  authenticationType?: string; // e.g., 'kount'
+  authenticationType?: string;
   kount?: { challengeId: string; channel?: string };
-  // Some environments return "kountChallenge" instead of "kount"
   kountChallenge?: { challengeId: string };
   creditReport?: any;
   extracted_hp_agreements?: any[];
@@ -23,12 +22,19 @@ export const startPcpCreditReport = async (sessionId: string): Promise<CreditRep
     return res.data;
   } catch (error: any) {
     console.error('Credit report API error:', error);
-    // Sanitize error for frontend consumption
+    
+    // Preserve original error response for status code checking
+    if (error.response?.status >= 500 || error.code === 'ECONNABORTED') {
+      // For server errors and timeouts, preserve the original error
+      error.name = 'CreditReportError';
+      throw error;
+    }
+    
+    // Sanitize error for frontend consumption for other error types
     const sanitizedError = new Error(
       error.response?.status === 400 ? 'Invalid credit report request' :
       error.response?.status === 401 ? 'Credit report authentication failed' :
       error.response?.status === 429 ? 'Credit report service temporarily unavailable' :
-      error.code === 'ECONNABORTED' ? 'Credit report request timed out' :
       'Credit report service unavailable'
     );
     sanitizedError.name = 'CreditReportError';

@@ -13,7 +13,7 @@ export const Header: React.FC = () => {
       <Flex 
         maxW="3xl"
         mx="auto"
-        px={{ base: 4, sm: 6, lg: 8 }}
+        px={{ base: 6, sm: 8, lg: 12 }}
         justify="space-between" 
         align="center"
       >

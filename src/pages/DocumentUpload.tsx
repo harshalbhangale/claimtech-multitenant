@@ -1,5 +1,5 @@
-import { VStack, Heading, Text, Button, Image, SimpleGrid, Box, Icon, HStack, Input } from '@chakra-ui/react';
-import { IdentificationIcon, InformationCircleIcon, LockClosedIcon,  ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { VStack, Heading, Text, Button, Image, SimpleGrid, Box, Icon, HStack, Input, Container } from '@chakra-ui/react';
+import { IdentificationIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { useState, useRef } from 'react';
 import { DocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
 
@@ -20,24 +20,28 @@ const DocumentUpload = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      // Reset upload states when new file is selected
+      setUploadError(null);
+      setUploadSuccess(null);
     }
   };
-  const handleContinue = async () => {
+
+  const handleUpload = async () => {
     if (!selectedFile) {
       setUploadError('Please select a file to upload.');
       return;
     }
+    
     setUploading(true);
     setUploadError(null);
     setUploadSuccess(null);
-    console.log("Uploading file:", selectedFile.name);
-
+    
     try {
       const res = await uploadIdDocument(selectedFile);
       console.log("Upload Success:", res);
       setUploadSuccess('Document uploaded successfully!');
-      // You could also store res.document_id or res.id_document_url in state or context
     } catch (err: any) {
       console.error("Upload Error:", err);
       setUploadError('Failed to upload document. Please try again.');
@@ -45,12 +49,17 @@ const DocumentUpload = () => {
       setUploading(false);
     }
   };
+  const handleContinue = () => {
+    // Redirect to dashboard
+    window.location.href = '/dashboard';
+  };
 
 
   return (
     <Box minH="100vh" bg="white">
       <Header />
-      <VStack spacing={6} align="center" px={4} py={4} maxW="container.sm" mx="auto">
+      <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
+        <VStack spacing={6} align="center" w="full">
         {/* Header with Icon */}
         <Box position="relative" display="inline-block">
           <Icon
@@ -200,21 +209,45 @@ const DocumentUpload = () => {
               </HStack>
             )}
             
-            <Button
-              variant="outline"
-              borderColor="#6A47CF"
-              color="gray.800"
-              size="md"
-              fontWeight="xs"
-              height="40px"
-              fontFamily="Poppins"
-              fontSize="sm"
-              borderRadius="full"
-              _hover={{ bg: '#F3F0FA' }}
-              onClick={handleFileButtonClick}
-            >
-              Change file
-            </Button>
+            {/* Change file and Upload Document buttons side by side */}
+            <HStack spacing={4} w="full">
+              <Button
+                variant="outline"
+                borderColor="#6A47CF"
+                color="gray.800"
+                size="md"
+                fontWeight="xs"
+                height="40px"
+                fontFamily="Poppins"
+                fontSize="sm"
+                borderRadius="full"
+                _hover={{ bg: '#F3F0FA' }}
+                onClick={handleFileButtonClick}
+                flex="1"
+              >
+                Change file
+              </Button>
+              {!uploadSuccess && (
+                <Button
+                  bg={config.accentColor}
+                  color="white"
+                  size="md"
+                  height="40px"
+                  fontFamily="Poppins"
+                  borderRadius="full"
+                  _hover={{ bg: `${config.accentColor}CC` }}
+                  onClick={handleUpload}
+                  isLoading={uploading}
+                  loadingText="Uploading..."
+                  disabled={uploading}
+                  fontSize="sm"
+                  fontWeight="xs"
+                  flex="1"
+                >
+                  Upload Document
+                </Button>
+              )}
+            </HStack>
           </VStack>
         ) : (
           <Button
@@ -241,7 +274,6 @@ const DocumentUpload = () => {
         {/* Continue Button */}
         <Button
           bg={config.primaryColor}
-          color="black"
           size="lg"
           height="50px"
           w="full"
@@ -249,76 +281,13 @@ const DocumentUpload = () => {
           borderRadius="full"
           _hover={{ bg: `${config.primaryColor}CC` }}
           onClick={handleContinue}
-          isLoading={uploading}
-          loadingText="Uploading..."
-          disabled={uploading}
+          disabled={!uploadSuccess}
         >
           Continue
           <Icon as={ArrowRightIcon} w={5} h={5} ml={2} />
         </Button>
-
-        {/* Claim Amount */}
-        <HStack spacing={2}>
-          <Box
-            w={8}
-            h={8}
-            borderRadius="full"
-            bg="#5B34C8"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            color="white"
-            fontWeight="bold"
-            fontSize="sm"
-            flexShrink={0}
-          >
-            <Box 
-              as="svg" 
-              xmlns="http://www.w3.org/2000/svg" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              strokeWidth="1.5" 
-              stroke="currentColor" 
-              w="16px" 
-              h="16px"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
-            </Box>
-          </Box>
-
-          <Text fontFamily="Poppins" fontWeight="semibold">
-            Claim up to £2,976.30* per agreement
-          </Text>
-        </HStack>
-
-        {/* Trustpilot Image */}
-        <Image src="/icons/trustpilot.svg" alt="Trustpilot rating" h="8" />
-
-        {/* Security Features */}
-        <SimpleGrid columns={3} spacing={8} w="full">
-          {[
-            { icon: ShieldCheckIcon, title: 'Secure Upload', subtitle: 'Your files are safe' },
-            { icon: LockClosedIcon, title: 'SSL Encrypted', subtitle: 'Protected connection' },
-            { icon: ShieldCheckIcon, title: 'Data Protected', subtitle: 'Privacy ensured' }
-          ].map((feature, index) => (
-            <VStack key={index}>
-              <Box
-                w={8}
-                h={8}
-                borderRadius="full"
-                bg="#F3F0FA"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Icon as={feature.icon} w={4} h={4} color="#6A47CF" />
-              </Box>
-              <Text fontSize="sm" fontWeight="bold" textAlign="center">{feature.title}</Text>
-              <Text fontSize="xs" color="gray.600" textAlign="center">{feature.subtitle}</Text>
-            </VStack>
-          ))}
-        </SimpleGrid>
-      </VStack>
+        </VStack>
+      </Container>
     </Box>
   );
 };

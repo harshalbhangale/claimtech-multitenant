@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   VStack,
@@ -60,6 +60,45 @@ export const UserDetailsPage: React.FC = () => {
 
   // Validation state
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; dob?: string }>({});
+
+  // Refs for auto-focus functionality
+  const dayRef = useRef<HTMLInputElement>(null);
+  const monthRef = useRef<HTMLInputElement>(null);
+  const yearRef = useRef<HTMLInputElement>(null);
+
+  // Handle Enter key press to submit form
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleNextStep();
+    }
+  };
+
+  // Handle date field navigation (forward and backward)
+  const handleDateKeyDown = (e: React.KeyboardEvent, field: 'day' | 'month' | 'year') => {
+    // Handle Enter key
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleNextStep();
+      return;
+    }
+
+    // Handle Backspace for reverse navigation
+    if (e.key === 'Backspace') {
+      const target = e.target as HTMLInputElement;
+      const currentValue = target.value;
+      
+      // If field is empty and backspace is pressed, move to previous field
+      if (currentValue === '') {
+        e.preventDefault();
+        if (field === 'month' && dayRef.current) {
+          dayRef.current.focus();
+        } else if (field === 'year' && monthRef.current) {
+          monthRef.current.focus();
+        }
+      }
+    }
+  };
 
   // Load saved user details and lender selection on component mount
   useEffect(() => {
@@ -129,14 +168,14 @@ export const UserDetailsPage: React.FC = () => {
     <Box minH="100vh" bg="white" w="100%">
       <Header />
 
-      <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 4, sm: 6, lg: 8 }}>
+      <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
         <VStack spacing={{ base: 4, md: 6 }} align="stretch">
           {/* Progress Steps */}
           <ProgressBar currentStep={2} totalSteps={4} />
           {/* Purple Banner */}
           <Box bg={config.accentColor} color="white" p={4} borderRadius="xl" >
             <Flex justify="center" align="center" gap={4}>
-              <Text fontSize={{ base: "xs", md: "sm" }} fontWeight="medium">
+              <Text fontSize={{ base: "xs", md: "xs" }} fontWeight="medium">
                 You have selected {selectedLendersCount} agreements which could be worth a total refund value of
               </Text>
               <Box position="relative" display="inline-block" minW="90px">
@@ -158,7 +197,7 @@ export const UserDetailsPage: React.FC = () => {
                   fontWeight="bold"
                   zIndex={1}
                 >
-                  £2976*
+                  £{2976 * selectedLendersCount}*
                 </Text>
               </Box>
             </Flex>
@@ -188,6 +227,7 @@ export const UserDetailsPage: React.FC = () => {
                     setFirstName(e.target.value);
                     if (errors.firstName) setErrors({ ...errors, firstName: undefined });
                   }}
+                  onKeyDown={handleKeyDown}
                   bg="white"
                   border="1px solid"
                   borderColor={errors.firstName ? "red.400" : "gray.300"}
@@ -212,6 +252,7 @@ export const UserDetailsPage: React.FC = () => {
                     setLastName(e.target.value);
                     if (errors.lastName) setErrors({ ...errors, lastName: undefined });
                   }}
+                  onKeyDown={handleKeyDown}
                   bg="white"
                   border="1px solid"
                   borderColor={errors.lastName ? "red.400" : "gray.300"}
@@ -250,6 +291,7 @@ export const UserDetailsPage: React.FC = () => {
                 </HStack>
                 <HStack spacing={4} w="full">
                   <Input
+                    ref={dayRef}
                     placeholder="DD"
                     size="lg"
                     flex="1"
@@ -258,7 +300,12 @@ export const UserDetailsPage: React.FC = () => {
                       const value = e.target.value.replace(/\D/g, '').slice(0, 2);
                       setDob({ ...dob, day: value });
                       if (errors.dob) setErrors({ ...errors, dob: undefined });
+                      // Auto-focus to month field when day is complete
+                      if (value.length === 2 && monthRef.current) {
+                        monthRef.current.focus();
+                      }
                     }}
+                    onKeyDown={(e) => handleDateKeyDown(e, 'day')}
                     bg="white"
                     border="1px solid"
                     borderColor={errors.dob ? "red.400" : "gray.300"}
@@ -266,7 +313,7 @@ export const UserDetailsPage: React.FC = () => {
                     _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
                     height="56px"
                     fontSize="lg"
-                    color="gray.500"
+                    color="gray.900"
                     textAlign="left"
                     fontFamily="Poppins"
                     _placeholder={{ color: "gray.400", fontSize: "lg" }}
@@ -275,6 +322,7 @@ export const UserDetailsPage: React.FC = () => {
                     aria-invalid={!!errors.dob}
                   />
                   <Input
+                    ref={monthRef}
                     placeholder="MM"
                     size="lg"
                     flex="1"
@@ -283,7 +331,12 @@ export const UserDetailsPage: React.FC = () => {
                       const value = e.target.value.replace(/\D/g, '').slice(0, 2);
                       setDob({ ...dob, month: value });
                       if (errors.dob) setErrors({ ...errors, dob: undefined });
+                      // Auto-focus to year field when month is complete
+                      if (value.length === 2 && yearRef.current) {
+                        yearRef.current.focus();
+                      }
                     }}
+                    onKeyDown={(e) => handleDateKeyDown(e, 'month')}
                     bg="white"
                     border="1px solid"
                     borderColor={errors.dob ? "red.400" : "gray.300"}
@@ -291,7 +344,7 @@ export const UserDetailsPage: React.FC = () => {
                     _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
                     height="56px"
                     fontSize="lg"
-                    color="gray.500"
+                    color="gray.900"
                     textAlign="left"
                     fontFamily="Poppins"
                     _placeholder={{ color: "gray.400", fontSize: "lg" }}
@@ -300,6 +353,7 @@ export const UserDetailsPage: React.FC = () => {
                     aria-invalid={!!errors.dob}
                   />
                   <Input
+                    ref={yearRef}
                     placeholder="YYYY"
                     size="lg"
                     flex="1"
@@ -309,6 +363,7 @@ export const UserDetailsPage: React.FC = () => {
                       setDob({ ...dob, year: value });
                       if (errors.dob) setErrors({ ...errors, dob: undefined });
                     }}
+                    onKeyDown={(e) => handleDateKeyDown(e, 'year')}
                     bg="white"
                     border="1px solid"
                     borderColor={errors.dob ? "red.400" : "gray.300"}
@@ -316,7 +371,7 @@ export const UserDetailsPage: React.FC = () => {
                     _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
                     height="56px"
                     fontSize="lg"
-                    color="gray.500"
+                    color="gray.900"
                     textAlign="left"
                     fontFamily="Poppins"
                     _placeholder={{ color: "gray.400", fontSize: "lg" }}
