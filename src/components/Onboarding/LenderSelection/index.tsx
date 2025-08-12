@@ -96,6 +96,28 @@ const LenderSelection: React.FC = () => {
         setIsNetworkError(false);
         const response = await getLenders();
         setLenders(response.lender_groups);
+        
+        // Validate selected lenders against available lenders
+        if (selectedLenders.length > 0) {
+          const availableLenderIds = response.lender_groups.map(group => group.id);
+          const validSelectedLenders = selectedLenders.filter(id => 
+            availableLenderIds.includes(id)
+          );
+          
+          // If some selected lenders are no longer available, update the selection
+          if (validSelectedLenders.length !== selectedLenders.length) {
+            console.log('Removing invalid lenders from selection:', {
+              original: selectedLenders,
+              valid: validSelectedLenders,
+              removed: selectedLenders.filter(id => !availableLenderIds.includes(id))
+            });
+            
+            setSelectedLenders(validSelectedLenders);
+            saveLenderSelection({
+              selectedLenders: validSelectedLenders
+            });
+          }
+        }
       } catch (err) {
         console.error('Error fetching lenders:', err);
         const networkError = isNetworkErrorType(err);
@@ -112,7 +134,7 @@ const LenderSelection: React.FC = () => {
     };
 
     fetchLenders();
-  }, []);
+  }, [selectedLenders]);
 
   // Retry function to refetch lenders
   const handleRetry = async () => {
@@ -123,6 +145,28 @@ const LenderSelection: React.FC = () => {
     try {
       const response = await getLenders();
       setLenders(response.lender_groups);
+      
+      // Validate selected lenders against available lenders
+      if (selectedLenders.length > 0) {
+        const availableLenderIds = response.lender_groups.map(group => group.id);
+        const validSelectedLenders = selectedLenders.filter(id => 
+          availableLenderIds.includes(id)
+        );
+        
+        // If some selected lenders are no longer available, update the selection
+        if (validSelectedLenders.length !== selectedLenders.length) {
+          console.log('Removing invalid lenders from selection on retry:', {
+            original: selectedLenders,
+            valid: validSelectedLenders,
+            removed: selectedLenders.filter(id => !availableLenderIds.includes(id))
+          });
+          
+          setSelectedLenders(validSelectedLenders);
+          saveLenderSelection({
+            selectedLenders: validSelectedLenders
+          });
+        }
+      }
     } catch (err) {
       console.error('Error fetching lenders on retry:', err);
       const networkError = isNetworkErrorType(err);
