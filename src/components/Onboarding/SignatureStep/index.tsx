@@ -25,6 +25,8 @@ import { submitSignature, canvasToFile } from '../../../api/services/onboarding/
 import { ensureCheckioScript } from '../../../utils/checkioFingerprint';
 import { startPcpCreditReport } from '../../../api/services/onboarding/checkio';
 import { storeChallengeData } from '../../../utils/checkioStorage';
+import { getLenderSelection } from '../../../utils/onboardingStorage';
+import Trustpilot from '../Common/Trustpilot';
 
 const SignatureStep: React.FC = () => {
   const sigCanvasRef = useRef<any>(null);
@@ -39,6 +41,7 @@ const SignatureStep: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [claimAmount, setClaimAmount] = useState<string>('£6,427*');
 
   // Calculate responsive canvas dimensions
   const updateCanvasDimensions = () => {
@@ -64,25 +67,29 @@ const SignatureStep: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Load saved signature on component mount
+  // Calculate claim amount based on selected lenders
   useEffect(() => {
-    const savedSignature = getSavedSignature();
-    if (savedSignature && savedSignature.signatureDataUrl) {
-      // Load signature into canvas
-      const img = document.createElement('img') as HTMLImageElement;
-      img.onload = () => {
-        const canvas = sigCanvasRef.current?.getCanvas();
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            setHasSignature(true);
-          }
-        }
-      };
-      img.src = savedSignature.signatureDataUrl;
+    const lenderSelection = getLenderSelection();
+    const selectedLenderCount = lenderSelection?.selectedLenders?.length || 0;
+    
+    if (selectedLenderCount > 0) {
+      const calculatedAmount = selectedLenderCount * 2976;
+      setClaimAmount(`£${calculatedAmount.toLocaleString()}*`);
+    } else {
+      setClaimAmount('£6,427*'); // Default fallback
     }
+  }, []);
+
+  // Clear signature on component mount (fresh start on page refresh)
+  useEffect(() => {
+    // Clear any saved signature on page refresh
+    clearSignature();
+    
+    // Ensure canvas is clear
+    if (sigCanvasRef.current) {
+      sigCanvasRef.current.clear();
+    }
+    setHasSignature(false);
 
     // Cleanup timeout on unmount
     return () => {
@@ -165,7 +172,7 @@ const SignatureStep: React.FC = () => {
       
       console.log('Signature upload response:', response);
 
-      setSuccess("Signature uploaded successfully! Processing credit report...");
+
       
       // After successful signature upload, embed fingerprint script and capture sessionId
       try {
@@ -178,7 +185,7 @@ const SignatureStep: React.FC = () => {
         if (creditReportResponse.status === 'complete') {
           // Credit report completed successfully
           console.log('Credit report completed successfully');
-          setSuccess("Credit report processed successfully! Redirecting...");
+
           
           setTimeout(() => {
             navigate('/auth/missingagreements');
@@ -192,20 +199,48 @@ const SignatureStep: React.FC = () => {
             || '';
           storeChallengeData({ challengeId, channel: creditReportResponse.kount?.channel });
           
-          setSuccess("Signature uploaded successfully! Verification required...");
+
           
           setTimeout(() => {
             navigate('/auth/otpverify');
           }, 1500);
           
         } else {
-          throw new Error('Unexpected credit report response');
+          // Handle unexpected credit report response by redirecting to missing lenders
+          console.log('Unexpected credit report response, redirecting to missing lenders');
+
+          
+          setTimeout(() => {
+            navigate('/auth/missingagreements');
+          }, 1500);
+          return;
         }
         
       } catch (creditReportError: any) {
         console.error('Credit report failed:', creditReportError);
         
-        // Show specific error message based on error type
+        // Handle specific error types
+        if (creditReportError.message === 'Unexpected credit report response') {
+          // Redirect to missing lenders for unexpected responses
+          console.log('Unexpected credit report response, redirecting to missing lenders');
+          
+          setTimeout(() => {
+            navigate('/auth/missingagreements');
+          }, 1500);
+          return;
+        }
+        
+        // Handle API errors (502, 500, etc.) by redirecting to missing lenders
+        if (creditReportError.response?.status >= 500 || creditReportError.code === 'ECONNABORTED') {
+          console.log('Credit report API error, redirecting to missing lenders');
+          
+          setTimeout(() => {
+            navigate('/auth/missingagreements');
+          }, 1500);
+          return;
+        }
+        
+        // Show specific error message for other error types
         let errorMessage = 'Credit report processing failed. ';
         if (creditReportError.name === 'CreditReportError') {
           errorMessage += creditReportError.message;
@@ -272,33 +307,29 @@ const SignatureStep: React.FC = () => {
         <VStack spacing={{ base: 4, md: 6 }} align="stretch">
           {/* Main Card */}
           <Box border="1.5px solid #E2E8F0" borderRadius="2xl" p={6} w="full">
-            <Text fontSize={{ base: 'xl', md: '3xl' }} fontWeight="bold" mb={2} color="gray.900" fontFamily="Poppins">
+            <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="gray.900" fontFamily="Poppins">
               Great news, !
             </Text>
-            <Flex align="center" mb={4} flexWrap="wrap" gap={1}>
-              <Text fontSize={{ base: 'sm', md: 'md' }} color="gray.900" fontWeight="bold" fontFamily="Poppins">
+            <Flex align="center" mb={2} flexWrap="wrap" gap={1}>
+              <Text fontSize={{ base: 'sm', md: 'sm' }} color="gray.900" fontWeight="bold" fontFamily="Poppins">
                 Final step to potentially claiming up to
               </Text>
               <Text as="span" color="#50C878" fontWeight="bold" fontFamily="Poppins">
-                £6,427*
+                {claimAmount}
               </Text>
               <Text fontSize="lg" ml={1}>
                 🎉
               </Text>
             </Flex>
 
-            <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.700" mb={6} fontFamily="Poppins">
+            <Text fontSize={{ base: 'xs', md: 'xs' }} color="gray.700" mb={6} fontFamily="Poppins">
               Please read the documents below before signing. They allow us to transfer your claim
               to our third party so they can make a claim on your behalf; this is No-Win-No-Fee, so
               you will only be charged if compensation is recovered.
             </Text>
 
             {/* Enhanced Signature Canvas */}
-            <Box mb={6} position="relative">
-              <Text fontSize="md" fontWeight="semibold" mb={3} color="gray.800" fontFamily="Poppins">
-                Digital Signature
-              </Text>
-              
+            <Box mb={4} position="relative">
               <Box 
                 ref={canvasContainerRef}
                 position="relative" 
@@ -367,10 +398,6 @@ const SignatureStep: React.FC = () => {
               </Box>
             </Box>
 
-            {/* Message Components */}
-            {error && <ErrorMessage message={error} />}
-            {success && <SuccessMessage message={success} />}
-            {warning && <WarningMessage message={warning} />}
 
             {/* Submit Button */}
             <Button
@@ -384,8 +411,12 @@ const SignatureStep: React.FC = () => {
               Find my agreements
             </Button>
 
-            {/* Trustpilot */}
-            <Image src="/icons/trustpilot.svg" alt="Trustpilot Rating" h="32px" objectFit="contain" mx="auto" mb={6} />
+            {/* Bottom Centered Content */}
+            <VStack spacing={4} mb={6} align="center">
+              {/* Trustpilot Rating */}
+              <Trustpilot size="md" />
+
+            </VStack>
 
             {/* Disclaimer Text */}
             <Text fontSize="xs" fontWeight="medium" color="gray.600" fontFamily="Poppins">
@@ -418,13 +449,15 @@ const SignatureStep: React.FC = () => {
             <VStack spacing={3} align="stretch" mb={6}>
               <HStack
                 as="a"
-                href="/documents/prowse-phillips.pdf"
-                download
+                href="https://claim.resolvemyclaim.co.uk/claim-requirements/pdf/preview/prowse_phillips_cfa"
+                target="_blank"
+                rel="noopener noreferrer"
                 spacing={3}
                 p={3}
                 border="1px solid #E2E8F0"
                 borderRadius="lg"
                 _hover={{ bg: '#F9FAFB' }}
+                cursor="pointer"
               >
                 <ArrowDownTrayIcon width={20} height={20} color={config.accentColor} />
                 <Text fontSize="sm" color="gray.900" fontWeight="medium" flex="1" fontFamily="Poppins">
@@ -433,13 +466,15 @@ const SignatureStep: React.FC = () => {
               </HStack>
               <HStack
                 as="a"
-                href="/documents/resolve-my-claim.pdf"
-                download
+                href="https://claim.resolvemyclaim.co.uk/claim-requirements/pdf/preview/my_claims_centre_form_of_authority"
+                target="_blank"
+                rel="noopener noreferrer"
                 spacing={3}
                 p={3}
                 border="1px solid #E2E8F0"
                 borderRadius="lg"
                 _hover={{ bg: '#F9FAFB' }}
+                cursor="pointer"
               >
                 <ArrowDownTrayIcon width={20} height={20} color={config.accentColor} />
                 <Text fontSize="sm" color="gray.900" fontWeight="medium" flex="1" fontFamily="Poppins">

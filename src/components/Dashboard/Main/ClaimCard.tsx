@@ -92,42 +92,42 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
             Action required
           </Badge>
         )}
-
-        <Heading fontSize="lg" fontWeight="bold" mb={1}>{lender}</Heading>
-        <HStack
-          display="inline-flex"
-          bg={`${config.accentLightColor}80`}
-          borderRadius="full"
-          px={{ base: 2, md: 3 }}
-          py={{ base: 0.5, md: 1 }}
-          mb={{ base: 2, md: 4 }}
-          border="1px solid"
-          borderColor={`${config.accentColor}40`}
-          boxShadow="0px 1px 3px rgba(0,0,0,0.05)"
-          _hover={{ transform: "translateY(-1px)", boxShadow: "0px 3px 6px rgba(0,0,0,0.1)" }}
-          transition="all 0.2s"
-          spacing={{ base: 1, md: 2 }}
-          maxW="100%"
-        >
-          <Circle
-            size={{ base: "14px", md: "18px" }}
-            bg={config.accentColor}
-            color="white"
-            minW="unset"
+        <HStack w="100%" justify="space-between" align="center" mb={4}>
+          <Heading fontSize="lg" fontWeight="bold">{lender}</Heading>
+          <HStack
+            display="inline-flex"
+            bg={`${config.accentLightColor}80`}
+            borderRadius="full"
+            px={{ base: 2, md: 3 }}
+            py={{ base: 0.5, md: 1 }}
+            border="1px solid"
+            borderColor={`${config.accentColor}40`}
+            boxShadow="0px 1px 3px rgba(0,0,0,0.05)"
+            _hover={{ transform: "translateY(-1px)", boxShadow: "0px 3px 6px rgba(0,0,0,0.1)" }}
+            transition="all 0.2s"
+            spacing={{ base: 1, md: 2 }}
+            maxW="100%"
           >
-            <Text fontSize={{ base: "8px", md: "10px" }} fontWeight="bold">!</Text>
-          </Circle>
-          <Text
-            fontSize={{ base: "xs", md: "sm" }}
-            fontFamily="Poppins"
-            fontWeight="semibold"
-            color={config.accentColor}
-            ml={{ base: 0.5, md: 1 }}
-            noOfLines={1}
-            maxW={{ base: "110px", md: "none" }}
-          >
-            {stage}
-          </Text>
+            <Circle
+              size={{ base: "14px", md: "18px" }}
+              bg={config.accentColor}
+              color="white"
+              minW="unset"
+            >
+              <Text fontSize={{ base: "8px", md: "10px" }} fontWeight="bold">!</Text>
+            </Circle>
+            <Text
+              fontSize={{ base: "xs", md: "sm" }}
+              fontFamily="Poppins"
+              fontWeight="semibold"
+              color={config.accentColor}
+              ml={{ base: 0.5, md: 1 }}
+              noOfLines={1}
+              maxW={{ base: "110px", md: "none" }}
+            >
+              {stage}
+            </Text>
+          </HStack>
         </HStack>
 
         <ClaimProgress currentStep={1}/>

@@ -1,5 +1,6 @@
 // src/components/Dashboard/Main/AgreementModal.tsx
 import React, { useState, useRef } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Modal,
   ModalOverlay,
@@ -36,9 +37,28 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
 }) => {
   const { config } = useTenant();
   const toast = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
   const [showAddAnother, setShowAddAnother] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // React Query mutation for saving agreement details
+  const saveAgreementMutation = useMutation({
+    mutationFn: (data: AgreementDetailsRequest & { agreement_document?: File }) => 
+      saveAgreementDetails(claimId, data),
+    onSuccess: () => {
+      // Invalidate and refetch claims data for instant update
+      queryClient.invalidateQueries({ queryKey: ['claims'] });
+      queryClient.invalidateQueries({ queryKey: ['agreements', claimId] });
+
+      
+      // Show option to add another agreement
+      setShowAddAnother(true);
+    },
+    onError: (error: any) => {
+      console.error('Error saving agreement details:', error);
+
+    }
+  });
 
   // Form state
   const [formData, setFormData] = useState<AgreementDetailsRequest>({
@@ -119,35 +139,14 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      // Include file in the request if selected
-      const requestData = {
-        ...formData,
-        agreement_document: selectedFile || undefined,
-      };
+    // Include file in the request if selected
+    const requestData = {
+      ...formData,
+      agreement_document: selectedFile || undefined,
+    };
 
-      await saveAgreementDetails(claimId, requestData);
-      toast({
-        title: "Success",
-        description: "Agreement details have been saved successfully.",
-        status: "success",
-        duration: 3000,
-      });
-      
-      // Show option to add another agreement
-      setShowAddAnother(true);
-    } catch (error: any) {
-      console.error('Error saving agreement details:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to save agreement details. Please try again.",
-        status: "error",
-        duration: 5000,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Use React Query mutation
+    saveAgreementMutation.mutate(requestData);
   };
 
   const handleAddAnother = () => {
@@ -281,9 +280,9 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
                   fontSize="md"
                   fontWeight="semibold"
                   mt={4}
-                  isLoading={isSubmitting}
+                  isLoading={saveAgreementMutation.isPending}
                   loadingText="Saving..."
-                  disabled={isSubmitting}
+                  disabled={saveAgreementMutation.isPending}
                 >
                   Save Agreement Details
                 </Button>

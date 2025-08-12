@@ -73,7 +73,7 @@ export const Footer: React.FC = () => {
             <VStack spacing={{ base: 6, md: 8 }} align="flex-start" w="full">
               {/* Company Information */}
               <Text 
-                fontSize={{ base: "sm", md: "md" }} 
+                fontSize={{ base: "xs", md: "sm" }} 
                 color="gray.600" 
                 lineHeight="1.2"
                 textAlign="justify"
@@ -87,7 +87,7 @@ export const Footer: React.FC = () => {
                 
               {/* Claims Information */}
               <Text 
-                fontSize={{ base: "sm", md: "md" }} 
+                fontSize={{ base: "xs", md: "sm" }} 
                 color="gray.600" 
                 lineHeight="1.2"
                 textAlign="justify"
@@ -104,7 +104,7 @@ export const Footer: React.FC = () => {
                 
               {/* Fee Information */}
               <Text 
-                fontSize={{ base: "sm", md: "md" }} 
+                fontSize={{ base: "xs", md: "sm" }} 
                 color="gray.600"
                 lineHeight="1.2"
                 textAlign="justify"

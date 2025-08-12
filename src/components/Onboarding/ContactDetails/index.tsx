@@ -20,7 +20,6 @@ import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
 import NextButton from '../../Onboarding/Common/NextButton';
 import Trustpilot from '../Common/Trustpilot';
-import SuccessMessage from '../Common/SuccessMessage';
 import ErrorMessage from '../Common/ErrorMessage';
 import { saveContactDetails, getContactDetails } from '../../../utils/onboardingStorage';
 import { useAutoSave } from '../../../hooks/useAutoSave';
@@ -139,6 +138,14 @@ const ContactDetails: React.FC = () => {
     }
   };
 
+  // Handle Enter key press to trigger next step
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleNext();
+    }
+  };
+
   return (
     <Box minH="100vh" bg="white" w="100%">
       <Header />
@@ -163,6 +170,7 @@ const ContactDetails: React.FC = () => {
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
                     onBlur={() => setTouched(prev => ({ ...prev, mobile: true }))}
+                    onKeyDown={handleKeyDown}
                     bg="white"
                     border="2px solid"
                     borderColor={mobileError ? "red.300" : "#EAECF0"}
@@ -193,6 +201,7 @@ const ContactDetails: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
+                    onKeyDown={handleKeyDown}
                     bg="white"
                     border="2px solid"
                     borderColor={emailError ? "red.300" : "#EAECF0"}
@@ -219,9 +228,6 @@ const ContactDetails: React.FC = () => {
             {/* Error Message */}
             {error && <ErrorMessage message={error} />}
 
-            {/* Success Message */}
-            {success && <SuccessMessage message={success} />}
-
             {/* Next Step Button */}
             <NextButton 
               onClick={handleNext} 
@@ -229,8 +235,11 @@ const ContactDetails: React.FC = () => {
               label={isRegistering ? "Creating Account..." : "Next step"}
             />
 
-            {/* Trustpilot */}
-            <Trustpilot size="md"/>
+            <VStack spacing={4} align="center">
+              {/* Trustpilot Rating */}
+              <Trustpilot size="md" />
+
+            </VStack>
 
             {/* Disclaimer */}
             <Text fontSize="xs" color="black" textAlign="left" fontWeight="semibold" mt={6} fontFamily="Poppins">
