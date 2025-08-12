@@ -4,9 +4,8 @@ export interface CreditReportResponse {
   status: 'complete' | 'authentication-required';
   providerId?: string;
   searchType?: string;
-  authenticationType?: string; // e.g., 'kount'
+  authenticationType?: string;
   kount?: { challengeId: string; channel?: string };
-  // Some environments return "kountChallenge" instead of "kount"
   kountChallenge?: { challengeId: string };
   creditReport?: any;
   extracted_hp_agreements?: any[];

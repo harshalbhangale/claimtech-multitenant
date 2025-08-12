@@ -71,7 +71,7 @@ const AddressSearch: React.FC = () => {
       try {
         const rawResults = await fetchAddressesByPostcode(pc);
         const formatted = rawResults.map((item, idx) => {
-          const parts = [
+          const allParts = [
             item.address1,
             item.address2,
             item.address3,
@@ -82,10 +82,26 @@ const AddressSearch: React.FC = () => {
             item.postcode,
           ].filter(Boolean);
 
+          // Create 4-line display format: first 3 address lines + postcode
+          const addressLines = [
+            item.address1,
+            item.address2,
+            item.address3,
+            item.address4,
+            item.address5,
+            item.city,
+            item.region,
+          ].filter(Boolean);
+          
+          const displayParts = [
+            ...addressLines.slice(0, 3), // First 3 address components
+            item.postcode // Always include postcode as 4th line
+          ].filter(Boolean);
+
           return {
             id: idx,
-            label: parts.join(', '),
-            lines: parts.join('\n'),
+            label: allParts.join(', '), // Keep full label for dropdown
+            lines: displayParts.join('\n'), // Show first 3 lines + postcode
             address_id: item.address_id,
           };
         });
