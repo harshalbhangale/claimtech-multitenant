@@ -134,7 +134,7 @@ const LenderSelection: React.FC = () => {
     };
 
     fetchLenders();
-  }, [selectedLenders]);
+  }, []); // ✅ Remove selectedLenders dependency to prevent infinite re-renders
 
   // Retry function to refetch lenders
   const handleRetry = async () => {
