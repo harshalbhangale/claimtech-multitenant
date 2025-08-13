@@ -251,10 +251,10 @@ const OtpVerify: React.FC = () => {
     <Box minH="100vh" bg="white">
       <Header />
 
-      <Container maxW="3xl" py={10}>
+      <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
         <VStack spacing={8} align="stretch">
-          <Box border="2px solid #E2E8F0" borderRadius="lg" p={6} w="full">
-            <Text fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" mb={2}>
+          <Box border="1px solid #E2E8F0" borderRadius="xl" p={6} w="full">
+            <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" mb={2}>
               Check your messages now!
             </Text>
 
