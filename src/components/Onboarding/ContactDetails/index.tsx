@@ -150,7 +150,7 @@ const ContactDetails: React.FC = () => {
     <Box minH="100vh" bg="white" w="100%">
       <Header />
 
-      <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 4, sm: 6, lg: 8 }}>
+      <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
         <VStack spacing={{ base: 4, md: 6 }} align="stretch">
           {/* Progress */}
           <ProgressBar currentStep={4} totalSteps={4} />
