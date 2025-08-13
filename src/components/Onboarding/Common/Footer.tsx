@@ -14,7 +14,7 @@ export const Footer: React.FC = () => {
         justify="space-between" 
         align="center"
       >
-        <Container maxW="3xl" px={{ base: 4, sm: 6, lg: 8 }}>
+ <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
           <VStack spacing={{ base: 8, md: 10 }} align="flex-start">
             {/* Top Row - Logo and Navigation Links */}
             <Stack 

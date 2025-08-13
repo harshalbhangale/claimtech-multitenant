@@ -1,9 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, Circle, VStack, SimpleGrid, Box } from '@chakra-ui/react';
 import { useTenant } from '../../../contexts/TenantContext';
+import { getLenderSelection } from '../../../utils/onboardingStorage';
 
-export const SecureBar: React.FC = () => {
+interface SecureBarProps {
+  claimAmount?: number; // Optional override for custom amounts
+}
+
+export const SecureBar: React.FC<SecureBarProps> = ({ claimAmount }) => {
   const { config } = useTenant();
+  const [dynamicClaimAmount, setDynamicClaimAmount] = useState(6427);
+
+  // Automatically fetch lender selection and calculate claim amount
+  useEffect(() => {
+    const savedLenderSelection = getLenderSelection();
+    if (savedLenderSelection) {
+      const calculatedAmount = savedLenderSelection.selectedLenders.length * 2976;
+      setDynamicClaimAmount(calculatedAmount);
+    }
+  }, []);
+
+  // Use provided claimAmount if available, otherwise use calculated amount
+  const finalClaimAmount = claimAmount ?? dynamicClaimAmount;
 
   return (
     <SimpleGrid 
@@ -100,7 +118,7 @@ export const SecureBar: React.FC = () => {
         </VStack>
       </VStack>
 
-      {/* Claim up to £6,427* */}
+      {/* Claim up to amount */}
       <VStack align="center" textAlign="center" spacing={{ base: 3, md: 3 }}>
         <Circle 
           size={{ base: "40px", md: "40px" }} 
@@ -139,7 +157,7 @@ export const SecureBar: React.FC = () => {
             fontWeight="bold"
             lineHeight="1.3"
           >
-            £6,427*
+            £{finalClaimAmount.toLocaleString()}*
           </Text>
         </VStack>
       </VStack>
