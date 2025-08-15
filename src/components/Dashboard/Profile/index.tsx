@@ -9,28 +9,10 @@ import {
   Image,
   useToast,
   Skeleton,
-  IconButton,
-  Tooltip,
-  Divider,
   Badge,
   Icon,
 } from '@chakra-ui/react';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  MapPin, 
-  FileText, 
-  Edit3, 
-  LogOut,
-  ExternalLink,
-  Download,
-  Eye,
-  ArrowRightFromLine,
-  FileCheck,
-  ChevronRight,
-} from 'lucide-react';
+
 import { DocumentCheckIcon, ArrowRightOnRectangleIcon, ChevronRightIcon, CheckIcon, ArrowDownTrayIcon, PencilIcon, ExclamationTriangleIcon, DocumentIcon } from '@heroicons/react/24/outline';
 import { useProfile } from '../../../hooks/queries/useProfile';
 import { useNavigate } from 'react-router-dom';

@@ -56,7 +56,7 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
   const saveAgreementMutation = useMutation({
     mutationFn: (data: AgreementDetailsRequest & { agreement_document?: File }) => 
       saveAgreementDetails(claimId, data),
-    onSuccess: (newAgreementResponse, variables) => {
+    onSuccess: (newAgreementResponse, _variables) => {
       // Transform AgreementDetailsResponse to Agreement type
       const newAgreement: Agreement = {
         id: newAgreementResponse.id,
