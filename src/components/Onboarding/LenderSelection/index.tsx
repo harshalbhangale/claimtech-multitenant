@@ -335,15 +335,15 @@ const LenderSelection: React.FC = () => {
                 color="gray.900"
                 lineHeight="1.2"
               >
-                Check to see if you're owed up to £6427*?
+                Let’s get started
               </Text>
               <Text 
-                fontSize={{ base: "sm", md: "md" }} 
+                fontSize={{ base: "xs", md: "sm" }} 
                 color="gray.600" 
                 lineHeight="1.4"
                 mb={4}
               >
-                Select your vehicle finance lenders below to start your free check
+                Select all the lenders that you’ve had finance with between 2007 and 2021. Don’t worry if you can’t remember, hit skip and we’ll find them for you.
               </Text>
             </VStack>
             <Button

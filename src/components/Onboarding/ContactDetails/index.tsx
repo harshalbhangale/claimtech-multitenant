@@ -158,8 +158,11 @@ const ContactDetails: React.FC = () => {
           {/* Card */}
           <Box border="2px solid #E2E8F0" borderRadius="2xl" p={6} w="full">
             {/* Heading */}
-            <Text fontSize={{ base: 'xl', md: 'xl' }} fontWeight="bold" mb={6} color="gray.900">
-              Where should we send your compensation details?
+            <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold"  color="gray.900">
+              How can we get in touch?
+            </Text>
+            <Text fontSize={{ base: 'sm', md: 'md' }} color="gray.900"  mb={6}>
+            By providing your details below, we’ll keep you updated on the progress of your case.
             </Text>
             <VStack spacing={4} align="stretch" mb={4}>
               {/* Mobile Number Input */}
@@ -242,12 +245,12 @@ const ContactDetails: React.FC = () => {
             </VStack>
 
             {/* Disclaimer */}
-            <Text fontSize="xs" color="black" textAlign="left" fontWeight="semibold" mt={6} fontFamily="Poppins">
-              By clicking 'Next step' you agree to Solvo Solutions Ltd T/A Resolve My Claim's{' '}
+            <Text fontSize="xs" color="black" textAlign="center" fontWeight="regular" mt={6} fontFamily="Poppins">
+              By clicking 'Next step' you agree to Solvo Solutions Ltd's {' '}
               <Link href="/privacy" color={config.accentColor} textDecoration="underline">
                 Privacy Policy
               </Link>{' '}
-              and to be contacted by email, SMS and phone to complete your claims
+              & being contacted by SMS, Phone and Email with updates about your case.
             </Text>
           </Box>
 
@@ -263,3 +266,4 @@ const ContactDetails: React.FC = () => {
 
 export default ContactDetails;
 export { ContactDetails };
+

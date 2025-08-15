@@ -211,10 +211,10 @@ export const UserDetailsPage: React.FC = () => {
               mb={3}
               color="gray.900"
             >
-              Let's find your finance agreements
+              Now let's find your agreements
             </Text>
             <Text color="gray.600" mb={6} fontSize={{ base: "sm", md: "md" }}>
-              Enter your details below so we can search for your finance agreements
+            Enter your name and date of birth so we can find your vehicle finance agreements.
             </Text>
 
             <VStack spacing={5} align="stretch" mb={6}>
@@ -245,7 +245,7 @@ export const UserDetailsPage: React.FC = () => {
 
               <Box>
                 <Input
-                  placeholder="Last name"
+                  placeholder="Surname"
                   size="lg"
                   value={lastName}
                   onChange={(e) => {

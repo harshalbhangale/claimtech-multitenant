@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -23,85 +23,74 @@ import { saveSelectedAddress, getSelectedAddress } from '../../../utils/addressS
 import type { RawAddress, FormattedAddress } from '../../../types/address';
 import NextButton from '../Common/NextButton';
 
-
 const AddressSearch: React.FC = () => {
   const navigate = useNavigate();
   const { config } = useTenant();
+
   const [postcode, setPostcode] = useState('');
+  const [postcodeError, setPostcodeError] = useState<string | null>(null);
+  const postcodeRef = useRef<HTMLInputElement>(null);
+
   const [addresses, setAddresses] = useState<FormattedAddress[]>([]);
   const [rawAddresses, setRawAddresses] = useState<RawAddress[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [openDropdown, setOpenDropdown] = useState(false);
-  const [loading, setLoading] = useState(false); // Loader state for Find button
+  const [loading, setLoading] = useState(false);
 
-  // Load previously selected address on component mount
+  // Load previously selected address on mount
   useEffect(() => {
-    const savedAddress = getSelectedAddress();
-    if (savedAddress) {
-      // Pre-fill with saved data
-      setPostcode(extractPostcodeFromAddress(savedAddress.address.label));
-      setAddresses([savedAddress.address]);
-      setRawAddresses([savedAddress.raw]);
-      setSelectedId(savedAddress.address.id);
+    const saved = getSelectedAddress();
+    if (saved) {
+      setPostcode(extractPostcodeFromAddress(saved.address.label));
+      setAddresses([saved.address]);
+      setRawAddresses([saved.raw]);
+      setSelectedId(saved.address.id);
     }
   }, []);
 
   const extractPostcodeFromAddress = (addressLabel: string): string => {
-    // Extract postcode from address label (last part after last comma)
     const parts = addressLabel.split(', ');
     return parts[parts.length - 1] || '';
+    // assumes postcode is the last segment in label
   };
 
+  // UK postcode validator (allows optional space, common formats)
   const validPostcode = (pc: string): boolean => {
-    // UK postcodes follow various formats, this regex covers most common formats
-    // For example: SW1A 1AA, M1 1AA, B33 8TH, CR2 6XH, DN55 1PT
-    const postcodeRegex = /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i;
-    return postcodeRegex.test(pc.replace(/\s/g, ''));
+    const norm = pc.trim().toUpperCase();
+    const re = /^([A-Z]{1,2}[0-9][A-Z0-9]?)\s?[0-9][A-Z]{2}$/;
+    return re.test(norm);
   };
 
   const handleFind = () => {
     const pc = postcode.trim();
     if (!validPostcode(pc)) {
-      alert('Please enter a valid UK postcode ');
+      setPostcodeError('Please enter a valid UK postcode');
+      if (postcodeRef.current) postcodeRef.current.focus();
       return;
     }
+    setPostcodeError(null);
 
     setLoading(true);
-    const getAddresses = async () => {
+    (async () => {
       try {
         const rawResults = await fetchAddressesByPostcode(pc);
         const formatted = rawResults.map((item, idx) => {
           const allParts = [
-            item.address1,
-            item.address2,
-            item.address3,
-            item.address4,
-            item.address5,
-            item.city,
-            item.region,
-            item.postcode,
+            item.address1, item.address2, item.address3, item.address4, item.address5,
+            item.city, item.region, item.postcode,
           ].filter(Boolean);
 
-          // Create 4-line display format: first 3 address lines + postcode
           const addressLines = [
-            item.address1,
-            item.address2,
-            item.address3,
-            item.address4,
-            item.address5,
-            item.city,
-            item.region,
+            item.address1, item.address2, item.address3, item.address4, item.address5,
+            item.city, item.region,
           ].filter(Boolean);
-          
-          const displayParts = [
-            ...addressLines.slice(0, 3), // First 3 address components
-            item.postcode // Always include postcode as 4th line
-          ].filter(Boolean);
+
+          const displayParts = [...addressLines.slice(0, 3), item.postcode].filter(Boolean);
 
           return {
             id: idx,
-            label: allParts.join(', '), // Keep full label for dropdown
-            lines: displayParts.join('\n'), // Show first 3 lines + postcode
+            label: allParts.join(', '),
+            lines: displayParts.join('\n'),
             address_id: item.address_id,
           };
         });
@@ -112,28 +101,21 @@ const AddressSearch: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    };
-
-    getAddresses();
+    })();
   };
 
   const handleNext = () => {
     if (selectedId === null) return;
-
     const selectedAddress = addresses.find((a) => a.id === selectedId);
     const selectedRaw = rawAddresses.find((_, idx) => idx === selectedId);
-    
     if (selectedAddress && selectedRaw) {
-      // Save selected address to localStorage
       saveSelectedAddress(selectedAddress, selectedRaw);
-      console.log('Selected Address saved:', selectedAddress);
     }
-    
     navigate('/auth/contactdetails');
   };
 
-  // Handle Enter key press to trigger address search
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  // Enter key on postcode triggers find
+  const handlePostcodeKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleFind();
@@ -155,25 +137,36 @@ const AddressSearch: React.FC = () => {
             <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" mb={3} color="gray.900">
               Your address
             </Text>
-            <Text fontSize={{ base: 'sm', md: 'md' }} color="gray.900" mb={6}>
-              We need your current address to search for your finance agreements. Start by entering your postcode below.
+            <Text fontSize={{ base: 'sm', md: 'md' }} color="gray.900">
+              We need your <b style={{ color: '#4A5568' }}>current address</b> to ensure your <b style={{ color: '#4A5568' }}>finance agreements</b> are verified accurately
+            </Text>
+            <Text fontSize={{ base: 'sm', md: 'md' }} color="gray.900" fontWeight="semibold" mt={2} mb={2}>
+              Please enter your postcode and tap ‘find’
             </Text>
 
             {/* Postcode Input and Button */}
-            <HStack spacing={4} mb={addresses.length ? 4 : 6} w="full">
+            <HStack spacing={4} mb={addresses.length ? 2 : 4} w="full">
               <Input
+                ref={postcodeRef}
                 placeholder="Postcode"
                 size="lg"
                 flex="3"
                 value={postcode}
-                onChange={(e) => setPostcode(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onChange={(e) => {
+                  setPostcode(e.target.value);
+                  if (postcodeError) setPostcodeError(null);
+                }}
+                onKeyDown={handlePostcodeKeyDown}
                 bg="white"
                 border="1px solid"
-                borderColor="gray.300"
+                borderColor={postcodeError ? 'red.400' : 'gray.300'}
                 borderRadius="md"
-                _focus={{ borderColor: config.accentColor, boxShadow: `0 0 0 1px ${config.accentColor}` }}
+                _focus={{
+                  borderColor: postcodeError ? 'red.500' : config.accentColor,
+                  boxShadow: `0 0 0 1px ${postcodeError ? '#F56565' : config.accentColor}`,
+                }}
                 height="56px"
+                aria-invalid={!!postcodeError}
               />
               <Button
                 flex="1"
@@ -185,17 +178,20 @@ const AddressSearch: React.FC = () => {
                 onClick={handleFind}
                 fontWeight="medium"
                 rightIcon={
-                  loading ? (
-                    <Spinner size="sm" color="black" />
-                  ) : (
-                    <Text as="span" ml={1}>→</Text>
-                  )
+                  loading ? <Spinner size="sm" color="black" /> : <Text as="span" ml={1}>→</Text>
                 }
                 isDisabled={loading}
               >
                 Find
               </Button>
             </HStack>
+
+            {/* Inline postcode error */}
+            {postcodeError && (
+              <Text color="red.500" fontSize="sm" mt={1} mb={addresses.length ? 2 : 4}>
+                {postcodeError}
+              </Text>
+            )}
 
             {addresses.length > 0 && (
               <>
@@ -263,11 +259,10 @@ const AddressSearch: React.FC = () => {
 
             {/* Trustpilot */}
             <VStack spacing={4} align="center">
-              {/* Trustpilot Rating */}
               <Trustpilot size="md" />
-
             </VStack>
           </Box>
+
           <Box w="full" maxW={{ base: 'full', md: '2xl' }}>
             <SecureBar />
           </Box>
