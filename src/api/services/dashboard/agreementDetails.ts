@@ -56,6 +56,7 @@ export interface AgreementDetailsResponse {
   start_date?: string;
   contract_length?: number;
   dealership_name?: string;
+  status?: string; // Add status field
   created_at: string;
   updated_at: string;
 }
@@ -79,6 +80,7 @@ export interface Agreement {
   start_date: string;
   contract_length: number;
   dealership_name: string;
+  status?: string; // Add status field
   created_at: string;
   updated_at: string;
 }
@@ -155,24 +157,54 @@ export const saveAgreementDetails = async (
       console.log('Agreement details with file saved successfully:', response.data);
       return response.data;
     } else {
-      // Create complete payload with all fields, using null for missing ones (backend expects null)
-      const apiPayload: AgreementDetailsApiPayload = {
+      // Create payload with only fields that have values (exclude null/undefined)
+      const apiPayload: Partial<AgreementDetailsApiPayload> = {
         agreement_number: details.agreement_number,
-        vehicle_registration: details.vehicle_registration || null,
-        vehicle_make: details.vehicle_make || null,
-        vehicle_model: details.vehicle_model || null,
-        loan_amount: details.loan_amount || null,
-        annual_percentage_rate: details.annual_percentage_rate || null,
-        flat_interest_rate: details.flat_interest_rate || null,
-        monthly_payment: details.monthly_payment || null,
-        interest_payable: details.interest_payable || null,
-        total_cost_of_credit: details.total_cost_of_credit || null,
-        balloon_payment: details.balloon_payment || null,
-        contract_ongoing: details.contract_ongoing || null,
-        start_date: details.start_date || null,
-        contract_length: details.contract_length || null,
-        dealership_name: details.dealership_name || null,
       };
+      
+      // Only add fields that have actual values
+      if (details.vehicle_registration) {
+        apiPayload.vehicle_registration = details.vehicle_registration;
+      }
+      if (details.vehicle_make) {
+        apiPayload.vehicle_make = details.vehicle_make;
+      }
+      if (details.vehicle_model) {
+        apiPayload.vehicle_model = details.vehicle_model;
+      }
+      if (details.loan_amount !== undefined && details.loan_amount !== null) {
+        apiPayload.loan_amount = details.loan_amount;
+      }
+      if (details.annual_percentage_rate !== undefined && details.annual_percentage_rate !== null) {
+        apiPayload.annual_percentage_rate = details.annual_percentage_rate;
+      }
+      if (details.flat_interest_rate !== undefined && details.flat_interest_rate !== null) {
+        apiPayload.flat_interest_rate = details.flat_interest_rate;
+      }
+      if (details.monthly_payment !== undefined && details.monthly_payment !== null) {
+        apiPayload.monthly_payment = details.monthly_payment;
+      }
+      if (details.interest_payable !== undefined && details.interest_payable !== null) {
+        apiPayload.interest_payable = details.interest_payable;
+      }
+      if (details.total_cost_of_credit !== undefined && details.total_cost_of_credit !== null) {
+        apiPayload.total_cost_of_credit = details.total_cost_of_credit;
+      }
+      if (details.balloon_payment !== undefined && details.balloon_payment !== null) {
+        apiPayload.balloon_payment = details.balloon_payment;
+      }
+      if (details.contract_ongoing !== undefined && details.contract_ongoing !== null) {
+        apiPayload.contract_ongoing = details.contract_ongoing;
+      }
+      if (details.start_date) {
+        apiPayload.start_date = details.start_date;
+      }
+      if (details.contract_length !== undefined && details.contract_length !== null) {
+        apiPayload.contract_length = details.contract_length;
+      }
+      if (details.dealership_name) {
+        apiPayload.dealership_name = details.dealership_name;
+      }
       
       console.log('API payload being sent:', apiPayload);
       

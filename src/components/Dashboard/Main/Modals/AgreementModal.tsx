@@ -1,4 +1,4 @@
-// src/components/Dashboard/Main/AgreementModal.tsx
+// src/components/Dashboard/Main/Modals/AgreementModal.tsx
 import React, { useState, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -22,7 +22,8 @@ import {
 import { DocumentIcon, XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useTenant } from '../../../../contexts/TenantContext';
 import { saveAgreementDetails } from '../../../../api/services/dashboard/agreementDetails';
-import type { AgreementDetailsRequest } from '../../../../api/services/dashboard/agreementDetails';
+import type { AgreementDetailsRequest, Agreement } from '../../../../api/services/dashboard/agreementDetails';
+import { useAgreementsWithRealtime } from '../../../../hooks/queries/useClaims';
 
 interface AgreementDetailsModalProps {
   isOpen: boolean;
@@ -41,14 +42,52 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
   const [showAddAnother, setShowAddAnother] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // React Query mutation for saving agreement details
+  // Use the enhanced real-time hook for immediate updates
+  const { refetchImmediately, addAgreementLocally } = useAgreementsWithRealtime(claimId);
+
+  // Helper function to get lender name from claims data
+  const getLenderName = (): string => {
+    const claims = queryClient.getQueryData<any[]>(['claims']);
+    const claim = claims?.find(c => c.id === claimId);
+    return claim?.lender_name || '';
+  };
+
+  // React Query mutation for saving agreement details with immediate updates
   const saveAgreementMutation = useMutation({
     mutationFn: (data: AgreementDetailsRequest & { agreement_document?: File }) => 
       saveAgreementDetails(claimId, data),
-    onSuccess: () => {
-      // Invalidate and refetch claims data for instant update
+    onSuccess: (newAgreementResponse, variables) => {
+      // Transform AgreementDetailsResponse to Agreement type
+      const newAgreement: Agreement = {
+        id: newAgreementResponse.id,
+        claim_id: claimId,
+        lender_name: getLenderName(),
+        agreement_number: newAgreementResponse.agreement_number,
+        vehicle_registration: newAgreementResponse.vehicle_registration || '',
+        vehicle_make: newAgreementResponse.vehicle_make || '',
+        vehicle_model: newAgreementResponse.vehicle_model || '',
+        loan_amount: newAgreementResponse.loan_amount || 0,
+        annual_percentage_rate: newAgreementResponse.annual_percentage_rate || 0,
+        flat_interest_rate: newAgreementResponse.flat_interest_rate || 0,
+        monthly_payment: newAgreementResponse.monthly_payment || 0,
+        interest_payable: newAgreementResponse.interest_payable || 0,
+        total_cost_of_credit: newAgreementResponse.total_cost_of_credit || 0,
+        balloon_payment: newAgreementResponse.balloon_payment || 0,
+        contract_ongoing: newAgreementResponse.contract_ongoing || false,
+        start_date: newAgreementResponse.start_date || '',
+        contract_length: newAgreementResponse.contract_length || 0,
+        dealership_name: newAgreementResponse.dealership_name || '',
+        status: newAgreementResponse.status || 'pending',
+        created_at: newAgreementResponse.created_at,
+        updated_at: newAgreementResponse.updated_at,
+      };
+
+      // Immediately add the new agreement to local state
+      addAgreementLocally(newAgreement);
+
+      // Invalidate and refetch claims data to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['claims'] });
-      queryClient.invalidateQueries({ queryKey: ['agreements', claimId] });
+      
 
       
       // Show option to add another agreement
@@ -57,7 +96,11 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
     onError: (error: any) => {
       console.error('Error saving agreement details:', error);
 
-    }
+    },
+    onSettled: () => {
+      // Always refetch to ensure we have the latest data
+      refetchImmediately();
+    },
   });
 
   // Form state

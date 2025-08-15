@@ -12,7 +12,8 @@ export interface UpdateSignatureResponse {
 }
 
 export const updateSignature = async (
-  requirementId: string, 
+  claimId: string,
+  requirementId: string,
   signatureFile: File
 ): Promise<UpdateSignatureResponse> => {
   try {
@@ -20,10 +21,10 @@ export const updateSignature = async (
     const accessToken = localStorage.getItem('access_token');
     // Create FormData to send file
     const formData = new FormData();
-    formData.append('signature', signatureFile);
     formData.append('requirement_id', requirementId);
+    formData.append('signature_file', signatureFile);
     
-    const response = await api.put('/api/v1/onboarding/upload-signature/', formData, {
+    const response = await api.put(`/api/v1/claims/${claimId}/requirements/`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
