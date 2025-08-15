@@ -4,16 +4,63 @@ import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import ClaimCard from './ClaimCard';
 import ClaimCardSkeleton from './ClaimCardSkeleton';
 import { useTenant } from '../../../contexts/TenantContext';
-import { useClaims } from '../../../hooks/queries/useClaims';
+import { useClaimsWithRealtime, useCentralizedAgreementsPolling } from '../../../hooks/queries/useClaims';
 import { useRequirements } from '../../../hooks/queries/useRequirements';
-import { useAgreements } from '../../../hooks/queries/useClaims';
+import { useAgreementsWithRealtime } from '../../../hooks/queries/useClaims';
 import { Alert, AlertIcon } from '@chakra-ui/react';
+import { useQueryClient } from '@tanstack/react-query';
 
 const OpenClaims: React.FC = () => {
   const { config } = useTenant();
+  const queryClient = useQueryClient();
   
-  // TanStack Query handles all the loading, error, and data states
-  const { data: claims, isPending, error } = useClaims();
+  // TanStack Query handles all the loading, error, and data states with real-time updates
+  const { data: claims, isPending, error, refetchImmediately: refetchClaimsImmediately } = useClaimsWithRealtime();
+
+  // Centralized polling for all agreements - reduces server load significantly
+  useCentralizedAgreementsPolling();
+
+  // Global visibility change listener for immediate staff updates
+  React.useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // User returned to the tab, immediately refetch all data
+        refetchClaimsImmediately();
+        // Invalidate all agreements queries
+        claims?.forEach(claim => {
+          queryClient.invalidateQueries({ queryKey: ['agreements', claim.id] });
+        });
+      }
+    };
+
+    const handleFocus = () => {
+      // User switched back to the tab, immediately refetch all data
+      refetchClaimsImmediately();
+      // Invalidate all agreements queries
+      claims?.forEach(claim => {
+        queryClient.invalidateQueries({ queryKey: ['agreements', claim.id] });
+      });
+    };
+
+    const handleOnline = () => {
+      // Network connection restored, immediately refetch all data
+      refetchClaimsImmediately();
+      // Invalidate all agreements queries
+      claims?.forEach(claim => {
+        queryClient.invalidateQueries({ queryKey: ['agreements', claim.id] });
+      });
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleOnline);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [claims, queryClient, refetchClaimsImmediately]);
 
   return (
     <VStack spacing={{ base: 3, md: 4 }} align="stretch">
@@ -99,9 +146,28 @@ const OpenClaims: React.FC = () => {
 // Helper component to fetch requirements and agreements for a claim and render ClaimCard
 const ClaimCardWithRequirements: React.FC<{ claim: any }> = ({ claim }) => {
   const { data: requirements, isPending: _isReqPending } = useRequirements(claim.id);
-  const { data: agreements, isPending: isAgPending } = useAgreements(claim.id);
-  // Count pending requirements
-  const hasPendingRequirements = (requirements?.filter(r => r.status === 'pending').length || 0) > 0;
+  const { data: agreements, isPending: isAgPending } = useAgreementsWithRealtime(claim.id);
+  
+  // Count pending generic requirements (exclude special types handled by global banners)
+  const hasPendingRequirements = (requirements?.some(r =>
+    (r.status === 'pending' || r.status === 'rejected') &&
+    (() => {
+      const requirementType = (r.requirement_type as string) || '';
+      const specialTypes = ['signature', 'previous_address', 'previous_name', 'id_document'];
+      
+      // Special case: "Request proof for name change" should show the button
+      if (requirementType === 'previous_name' && r.requirement_reason && 
+          r.requirement_reason.toLowerCase().includes('name change')) {
+        return true; // Show the button
+      }
+      
+      // Exclude other special types
+      return !specialTypes.includes(requirementType);
+    })()
+  )) || false;
+
+  // No need for individual polling - centralized polling handles all updates
+  // This significantly reduces server load from multiple API calls
 
   return (
     <ClaimCard
@@ -114,6 +180,7 @@ const ClaimCardWithRequirements: React.FC<{ claim: any }> = ({ claim }) => {
       hasAdditionalRequirements={hasPendingRequirements}
       agreements={agreements}
       agreementsLoading={isAgPending}
+      isRealTimeUpdating={true} // Enable real-time updates for both claims and agreements
     />
   );
 };

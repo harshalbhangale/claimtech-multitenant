@@ -1,17 +1,45 @@
-import { Box, VStack, Text, HStack, Button, Icon, Container, useToast } from '@chakra-ui/react';
-import { DocumentCheckIcon, ArrowRightOnRectangleIcon, ChevronRightIcon, CheckIcon, ArrowDownTrayIcon, PencilIcon, ExclamationTriangleIcon, DocumentIcon } from '@heroicons/react/24/outline';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import {
+  Container,
+  VStack,
+  HStack,
+  Text,
+  Box,
+  Button,
+  Image,
+  useToast,
+  Skeleton,
+  Badge,
+  Icon,
+} from '@chakra-ui/react';
 
+import { DocumentCheckIcon, ArrowRightOnRectangleIcon, ChevronRightIcon, CheckIcon, ArrowDownTrayIcon, PencilIcon, ExclamationTriangleIcon, DocumentIcon } from '@heroicons/react/24/outline';
+import { useProfile } from '../../../hooks/queries/useProfile';
+import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../../contexts/TenantContext';
+import { Header } from '../Main/Header';
 import { downloadIDDocument } from '../../../api/services/dashboard/downloadIDDocument';
 import { useIDDocumentStatus } from '../../../hooks/queries/useIDDocumentStatus';
 
-const Profile = () => {
+const Profile: React.FC = () => {
+  const { data: profile, isLoading, error } = useProfile();
+  const navigate = useNavigate();
+  const toast = useToast();
   const { config } = useTenant();
   const [isDownloading, setIsDownloading] = useState(false);
-  const toast = useToast();
   const { data: hasIDDocument, isLoading: isCheckingID } = useIDDocumentStatus();
-  // const [ setSelectedFile] = useState<File | null>(null);
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    navigate('/auth/login');
+    toast({
+      title: 'Logged out successfully',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
 
   const handleDownloadDocument = async () => {
     setIsDownloading(true);
@@ -41,476 +69,505 @@ const Profile = () => {
     window.location.href = '/dashboard/documentupload';
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
 
+  const formatPhoneNumber = (phone: string) => {
+    if (phone.startsWith('44')) {
+      return `+${phone.slice(0, 2)} ${phone.slice(2, 5)} ${phone.slice(5, 8)} ${phone.slice(8)}`;
+    }
+    return phone;
+  };
 
-  // File select logic is kept but not used, as upload is coming soon
-  // const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0];
-  //   if (!file) return;
+  const formatAddress = (address: any) => {
+    const parts = [
+      address.address_line_1,
+      address.address_line_2,
+      address.address_line_3,
+      address.address_line_4,
+      address.city,
+      address.region,
+      address.postcode,
+      address.country
+    ].filter(Boolean);
+    
+    return parts.join(', ');
+  };
 
-  //   // Validate file type
-  //   const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-  //   if (!allowedTypes.includes(file.type)) {
-  //     toast({
-  //       title: "Invalid file type",
-  //       description: "Please upload a JPG, PNG or PDF file",
-  //       status: "error",
-  //       duration: 3000,
-  //       isClosable: true,
-  //     });
-  //     return;
-  //   }
+  if (isLoading) {
+    return (
+      <Box minH="100vh" bg="white">
+        <Header />
+        <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
+          <VStack spacing={6} align="stretch">
+            <Skeleton height="40px" />
+            <Skeleton height="200px" />
+            <Skeleton height="200px" />
+            <Skeleton height="200px" />
+            <Skeleton height="200px" />
+          </VStack>
+        </Container>
+      </Box>
+    );
+  }
 
-  //   // Validate file size (max 5MB)
-  //   const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-  //   if (file.size > maxSize) {
-  //     toast({
-  //       title: "File too large",
-  //       description: "Please upload a file smaller than 5MB",
-  //       status: "error",
-  //       duration: 3000,
-  //       isClosable: true,
-  //     });
-  //     return;
-  //   }
+  if (error) {
+    return (
+      <Box minH="100vh" bg="white">
+        <Header />
+        <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
+          <Box textAlign="center" py={10}>
+            <Text color="red.500" fontSize="lg" fontWeight="medium">
+              Failed to load profile. Please try again.
+            </Text>
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
 
-  //   setSelectedFile(file);
-  // };
+  if (!profile) {
+    return (
+      <Box minH="100vh" bg="white">
+        <Header />
+        <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
+          <Box textAlign="center" py={10}>
+            <Text color="gray.500" fontSize="lg">
+              No profile data available.
+            </Text>
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
 
   return (
-    <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
-      {/* Account Details Section */}
-      <Text color="gray.700" mb={2} mt={10} fontSize="md" fontWeight="bold">
-        Account details
-      </Text>
+    <Box minH="100vh" bg="white">
+      <Header />
+      <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
+        <VStack spacing={6} align="stretch">
+          {/* Page Title */}
+          <Text 
+            color="gray.700" 
+            mb={2} 
+            mt={10} 
+            fontSize="lg" 
+            fontWeight="bold"
+            fontFamily="Poppins"
+          >
+            Account details
+          </Text>
 
-
-      {/* Quick Actions */}
-      <VStack spacing={4} mb={10} align="stretch">
-        {/* Open Claim */}
-        <Box
-          as="button"
-          bg="white"
-          p={5}
-          borderRadius="xl"
-          boxShadow="sm"
-          border="1.5px solid"
-          borderColor="gray.100"
-          _hover={{ bg: 'gray.50', borderColor: 'gray.200' }}
-          w="full"
-          transition="all 0.2s"
-          onClick={() => window.location.href = '/dashboard'}
-        >
-          <HStack justify="space-between" align="center">
-            <HStack spacing={4}>
-              <Box
-                w={12}
-                h={12}
-                borderRadius="full"
-                bg={config.accentLightColor}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                border="1px solid"
-                borderColor={config.accentLightColor}
-              >
-                <Icon as={DocumentCheckIcon} w={6} h={6} color={config.accentColor} />
-              </Box>
-              <Text fontFamily="Poppins" fontSize="lg" fontWeight="medium">
-                Open Claims
-              </Text>
-            </HStack>
-            <Icon as={ChevronRightIcon} w={6} h={6} color="gray.400" />
-          </HStack>
-        </Box>
-        {/* Refer a Friend - Coming Soon */}
-        {/* <Box
-          as="button"
-          bg="gray.50"
-          p={5}
-          borderRadius="xl"
-          boxShadow="sm"
-          border="1.5px solid"
-          borderColor="gray.100"
-          w="full"
-          transition="all 0.2s"
-          cursor="not-allowed"
-          aria-disabled="true"
-          _hover={{ bg: 'gray.50', borderColor: 'gray.100' }}
-        >
-          <HStack justify="space-between" align="center">
-            <HStack spacing={4}>
-              <Box
-                w={12}
-                h={12}
-                borderRadius="full"
-                bg={config.accentLightColor}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                border="1px solid"
-                borderColor={config.accentLightColor}
-              >
-                <Icon as={GiftIcon} w={6} h={6} color={config.accentColor} />
-              </Box>
-              <Text fontFamily="Poppins" fontSize="lg" fontWeight="medium" color="gray.400">
-                Refer a Friend
-                <Badge ml={3} colorScheme="yellow" fontSize="0.8em" borderRadius="full" px={2}>
-                  Coming Soon
-                </Badge>
-              </Text>
-            </HStack>
-            <Icon as={ChevronRightIcon} w={6} h={6} color="gray.300" />
-          </HStack>
-        </Box> */}
-        {/* Log out */}
-        <Box
-          as="button"
-          bg="white"
-          p={5}
-          borderRadius="xl"
-          boxShadow="sm"
-          border="1.5px solid"
-          borderColor="gray.100"
-          _hover={{ bg: 'gray.50', borderColor: 'gray.200' }}
-          w="full"
-          transition="all 0.2s"
-          onClick={() => window.location.href = 'https://www.resolvemyclaim.co.uk/'}
-        >
-          <HStack justify="space-between" align="center">
-            <HStack spacing={4}>
-              <Box
-                w={12}
-                h={12}
-                borderRadius="full"
-                bg={config.accentLightColor}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                border="1px solid"
-                borderColor={config.accentLightColor}
-              >
-                <Icon as={ArrowRightOnRectangleIcon} w={6} h={6} color={config.accentColor} />
-              </Box>
-              <Text fontFamily="Poppins" fontSize="lg" fontWeight="medium">
-                Log out
-              </Text>
-            </HStack>
-            <Icon as={ChevronRightIcon} w={6} h={6} color="gray.400" />
-          </HStack>
-        </Box>
-      </VStack>
-
-      {/* Your Details Section
-      <HStack justify="space-between" align="center" mb={6}>
-        <Text color= "gray.700" fontSize="md" fontWeight="bold">
-          Your details
-        </Text>
-        <Button
-          variant="outline"
-          size="sm"
-          borderRadius="full"
-          borderColor={config.accentColor}
-          color={config.accentColor}
-          fontWeight="medium"
-          px={6}
-          _hover={{ bg: config.accentLightColor }}
-          isDisabled
-        >
-          Edit Profile
-          <Badge ml={2} colorScheme="yellow" borderRadius="full" px={2} fontSize="0.8em">
-            Coming Soon
-          </Badge>
-        </Button>
-      </HStack> */}
-
-      {/* Contact Details - Dummy Values
-      // <VStack spacing={4} mb={10} align="stretch">
-      //   <Input
-      //     value="example@email.com"
-      //     isReadOnly
-      //     bg="white"
-      //     borderRadius="lg"
-      //     fontSize="md"
-      //     fontFamily="Poppins"
-      //     size="lg"
-      //     border="1.5px solid"
-      //     borderColor="gray.200"
-      //     _hover={{ borderColor: 'gray.300' }}
-      //   />
-      //   <Input
-      //     value="+44 7123 456789"
-      //     isReadOnly
-      //     bg="white"
-      //     borderRadius="lg"
-      //     fontSize="md"
-      //     fontFamily="Poppins"
-      //     size="lg"
-      //     border="1.5px solid"
-      //     borderColor="gray.200"
-      //     _hover={{ borderColor: 'gray.300' }}
-      //   />
-      //   <Input
-      //     value="123 Example Street"
-      //     isReadOnly
-      //     bg="white"
-      //     borderRadius="lg"
-      //     fontSize="md"
-      //     color="gray.700"
-      //     fontFamily="Poppins"
-      //     size="lg"
-      //     border="1.5px solid"
-      //     borderColor="gray.200"
-      //     _hover={{ borderColor: 'gray.300' }}
-      //   />
-      //   <Input
-      //     value="Apt 4B"
-      //     isReadOnly
-      //     bg="white"
-      //     borderRadius="lg"
-      //     fontSize="md"
-      //     fontFamily="Poppins"
-      //     size="lg"
-      //     border="1.5px solid"
-      //     borderColor="gray.200"
-      //     _hover={{ borderColor: 'gray.300' }}
-      //   />
-      //   <Input
-      //     value="AB12 3CD"
-      //     isReadOnly
-      //     bg="white"
-      //     borderRadius="lg"
-      //     fontSize="md"
-      //     fontFamily="Poppins"
-      //     size="lg"
-      //     border="1.5px solid"
-      //     borderColor="gray.200"
-      //     _hover={{ borderColor: 'gray.300' }}
-      //   />
-      //   <SimpleGrid columns={3} spacing={4}>
-      //     <Input
-      //       value="01"
-      //       isReadOnly
-      //       bg="white"
-      //       borderRadius="lg"
-      //       fontSize="md"
-      //       fontFamily="Poppins"
-      //       size="lg"
-      //       border="1.5px solid"
-      //       borderColor="gray.200"
-      //       _hover={{ borderColor: 'gray.300' }}
-      //     />
-      //     <Input
-      //       value="01"
-      //       isReadOnly
-      //       bg="white"
-      //       borderRadius="lg"
-      //       fontSize="md"
-      //       fontFamily="Poppins"
-      //       size="lg"
-      //       border="1.5px solid"
-      //       borderColor="gray.200"
-      //       _hover={{ borderColor: 'gray.300' }}
-      //     />
-      //     <Input
-      //       value="1990"
-      //       isReadOnly
-      //       bg="white"
-      //       borderRadius="lg"
-      //       fontSize="md"
-      //       fontFamily="Poppins"
-      //       size="lg"
-      //       border="1.5px solid"
-      //       borderColor="gray.200"
-      //       _hover={{ borderColor: 'gray.300' }}
-      //     />
-      //   </SimpleGrid>
-      </VStack> */}
-{/* 
-
-      <Text color="gray.700" fontSize="md" fontWeight="bold" mb={4}>
-        Account settings
-      </Text>
-
-
-      <Box 
-        bg="white" 
-        p={6} 
-        borderRadius="xl" 
-        mb={6} 
-        border="1.5px solid"
-        borderColor="gray.100"
-        boxShadow="sm"
-      >
-        <Text fontWeight="bold" mb={6} fontFamily="Poppins" fontSize="lg">
-          Notifications
-        </Text>
-        <VStack spacing={5} align="stretch">
-          {[
-            { label: 'Email', name: 'email' },
-            { label: 'WhatsApp', name: 'whatsapp' },
-            { label: 'SMS', name: 'sms' }
-          ].map((notification, index) => (
-            <HStack key={index} justify="space-between" py={1}>
-              <Text fontFamily="Poppins" fontSize="md">{notification.label}</Text>
-              <RadioGroup defaultValue="yes">
-                <HStack spacing={6}>
-                  <Radio 
-                    value="yes" 
-                    color={config.primaryColor}
-                    size="lg"
-                    borderColor="gray.300"
-                  >
-                    <Text fontSize="md">Yes</Text>
-                  </Radio>
-                  <Radio 
-                    value="no" 
-                    color={config.primaryColor}
-                    size="lg"
-                    borderColor="gray.300"
-                  >
-                    <Text fontSize="md">No</Text>
-                  </Radio>
-                </HStack>
-              </RadioGroup>
-            </HStack>
-          ))}
-        </VStack>
-      </Box> */}
-
-      {/* ID Document - Only show if document exists */}
-      {!isCheckingID && hasIDDocument && (
-        <Box 
-          bg="white" 
-          p={6} 
-          borderRadius="xl" 
-          mb={8}
-          border="1.5px solid"
-          borderColor="gray.100"
-          boxShadow="sm"
-        >
-          <HStack justify="space-between" mb={0}>
-            <Text fontWeight="bold" fontFamily="Poppins" fontSize="lg">
-              ID Document
-            </Text>
-          </HStack>
-          <VStack spacing={4} align="stretch" mt={6}>
-            <HStack 
-              p={4} 
-              bg="green.50" 
-              borderRadius="lg" 
-              border="1px solid" 
-              borderColor="green.200"
-              justify="center"
-            >
-              <Icon as={CheckIcon} w={5} h={5} color="green.500" />
-              <Text fontSize="sm" color="green.700" fontFamily="Poppins" fontWeight="medium">
-                ID document uploaded successfully
-              </Text>
-            </HStack>
-            <HStack spacing={3}>
-              <Button
-                flex={1}
-                variant="outline"
-                color={config.accentColor}
-                borderColor={config.accentColor}
-                borderRadius="full"
-                fontFamily="Poppins"
-                fontWeight="semibold"
-                leftIcon={<Icon as={ArrowDownTrayIcon} w={4} h={4} strokeWidth={2}/>}
-                onClick={handleDownloadDocument}
-                isLoading={isDownloading}
-                loadingText="Downloading..."
-                _hover={{ bg: config.accentLightColor }}
-              >
-                Download
-              </Button>
-              <Button
-                flex={1}
-                variant="solid"
-                bg={config.accentColor}
-                color="white"
-                borderRadius="full"
-                fontFamily="Poppins"
-                fontWeight="semibold"
-                leftIcon={<Icon as={PencilIcon} w={4} h={4} strokeWidth={2}/>}
-                onClick={handleUpdateDocument}
-                _hover={{ bg: `${config.accentColor}80` }}
-              >
-                Update
-              </Button>
-            </HStack>
-          </VStack>
-        </Box>
-      )}
-
-      {/* ID Document Upload Section - Show when no document exists */}
-      {!isCheckingID && !hasIDDocument && (
-        <Box 
-          bg="white" 
-          p={6} 
-          borderRadius="xl" 
-          mb={8}
-          border="1.5px solid"
-          borderColor="gray.100"
-          boxShadow="sm"
-        >
-          <HStack justify="space-between" mb={0}>
-            <Text fontWeight="bold" fontFamily="Poppins" fontSize="lg">
-              ID Document
-            </Text>
-          </HStack>
-          <VStack spacing={4} align="stretch" mt={6}>
-            <HStack 
-              p={4} 
-              bg="orange.50" 
-              borderRadius="lg" 
-              border="1px solid" 
-              borderColor="orange.200"
-              justify="center"
-            >
-              <Icon as={ExclamationTriangleIcon} w={5} h={5} color="orange.500" />
-              <Text fontSize="sm" color="orange.700" fontFamily="Poppins" fontWeight="medium">
-                No ID uploaded - Upload required to access all features
-              </Text>
-            </HStack>
-            <Button
+          {/* Quick Actions */}
+          <VStack spacing={4} mb={4} align="stretch">
+            {/* Open Claims */}
+            <Box
+              as="button"
+              bg="white"
+              p={5}
+              borderRadius="xl"
+              boxShadow="sm"
+              border="1.5px solid"
+              borderColor="gray.100"
+              _hover={{ bg: 'gray.50', borderColor: 'gray.200' }}
               w="full"
-              variant="solid"
-              bg={config.accentColor}
-              color="white"
-              borderRadius="full"
-              fontFamily="Poppins"
-              fontWeight="semibold"
-              leftIcon={<Icon as={DocumentIcon} w={4} h={4} strokeWidth={2}/>}
-              onClick={handleUpdateDocument}
-              _hover={{ bg: `${config.accentColor}80` }}
+              transition="all 0.2s"
+              onClick={() => navigate('/dashboard')}
             >
-              Upload ID Document
-            </Button>
+              <HStack justify="space-between" align="center">
+                <HStack spacing={4}>
+                  <Box
+                    w={12}
+                    h={12}
+                    borderRadius="full"
+                    bg={config.accentLightColor}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    border="1px solid"
+                    borderColor={config.accentLightColor}
+                  >
+                    <Icon as={DocumentCheckIcon} w={6} h={6} color={config.accentColor} />
+                  </Box>
+                  <Text fontFamily="Poppins" fontSize="lg" fontWeight="medium">
+                    Open Claims
+                  </Text>
+                </HStack>
+                <Icon as={ChevronRightIcon} w={6} h={6} color="gray.400" />
+              </HStack>
+            </Box>
+
+            {/* Logout */}
+            <Box
+              as="button"
+              bg="white"
+              p={5}
+              borderRadius="xl"
+              boxShadow="sm"
+              border="1.5px solid"
+              borderColor="gray.100"
+              _hover={{ bg: 'gray.50', borderColor: 'gray.200' }}
+              w="full"
+              transition="all 0.2s"
+              onClick={handleLogout}
+            >
+              <HStack justify="space-between" align="center">
+                <HStack spacing={4}>
+                  <Box
+                    w={12}
+                    h={12}
+                    borderRadius="full"
+                    bg={config.accentLightColor}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    border="1px solid"
+                    borderColor={config.accentLightColor}
+                  >
+                    <Icon as={ArrowRightOnRectangleIcon} w={6} h={6} color={config.accentColor} />
+                  </Box>
+                  <Text fontFamily="Poppins" fontSize="lg" fontWeight="medium">
+                    Log out
+                  </Text>
+                </HStack>
+                <Icon as={ChevronRightIcon} w={6} h={6} color="gray.400" />
+              </HStack>
+            </Box>
           </VStack>
-        </Box>
-      )}
 
-      {/* Continue Button */}
-      <Button
-        w="full"
-        bg={config.primaryColor}
-        color="black"
-        size="lg"
-        height="56px"
-        borderRadius="full"
-        _hover={{ bg: `${config.primaryColor}80` }}
-        fontFamily="Poppins"
-        fontSize="lg"
-        fontWeight="semibold"
-        boxShadow="sm"
-        onClick={() => window.location.href = '/dashboard'}
-      >
-        Continue
+          {/* Personal Information */}
+          <Box 
+            bg="white" 
+            p={6} 
+            borderRadius="xl" 
+            mb={6} 
+            border="1.5px solid"
+            borderColor="gray.100"
+            boxShadow="sm"
+          >
+            <Text fontWeight="bold" mb={6} fontFamily="Poppins" fontSize="lg">
+              Personal Information
+            </Text>
+            <VStack spacing={4} align="stretch">
+              <HStack justify="space-between" py={2}>
+                <Text fontFamily="Poppins" fontSize="md" color="gray.600">Full Name:</Text>
+                <Text fontFamily="Poppins" fontSize="md" fontWeight="medium">
+                  {profile.first_name} {profile.last_name}
+                </Text>
+              </HStack>
+              <HStack justify="space-between" py={2}>
+                <Text fontFamily="Poppins" fontSize="md" color="gray.600">Email:</Text>
+                <Text fontFamily="Poppins" fontSize="md" fontWeight="medium">
+                  {profile.email}
+                </Text>
+              </HStack>
+              <HStack justify="space-between" py={2}>
+                <Text fontFamily="Poppins" fontSize="md" color="gray.600">Phone:</Text>
+                <Text fontFamily="Poppins" fontSize="md" fontWeight="medium">
+                  {formatPhoneNumber(profile.phone_number)}
+                </Text>
+              </HStack>
+              <HStack justify="space-between" py={2}>
+                <Text fontFamily="Poppins" fontSize="md" color="gray.600">Date of Birth:</Text>
+                <Text fontFamily="Poppins" fontSize="md" fontWeight="medium">
+                  {formatDate(profile.date_of_birth)}
+                </Text>
+              </HStack>
+              <HStack justify="space-between" py={2}>
+                <Text fontFamily="Poppins" fontSize="md" color="gray.600">Member Since:</Text>
+                <Text fontFamily="Poppins" fontSize="md" fontWeight="medium">
+                  {formatDate(profile.created_at)}
+                </Text>
+              </HStack>
+            </VStack>
+          </Box>
 
-      </Button>
-    </Container>
+          {/* Current Address */}
+          <Box 
+            bg="white" 
+            p={6} 
+            borderRadius="xl" 
+            mb={6} 
+            border="1.5px solid"
+            borderColor="gray.100"
+            boxShadow="sm"
+          >
+            <HStack justify="space-between" mb={6}>
+              <Text fontWeight="bold" fontFamily="Poppins" fontSize="lg">
+                Current Address
+              </Text>
+              <Badge colorScheme="green" variant="subtle" fontFamily="Poppins">
+                Current
+              </Badge>
+            </HStack>
+            <VStack spacing={4} align="stretch">
+              <HStack justify="space-between" py={2}>
+                <Text fontFamily="Poppins" fontSize="md" color="gray.600">Address:</Text>
+                <Text fontFamily="Poppins" fontSize="md" fontWeight="medium" textAlign="right" maxW="60%">
+                  {formatAddress(profile.address)}
+                </Text>
+              </HStack>
+              <HStack justify="space-between" py={2}>
+                <Text fontFamily="Poppins" fontSize="md" color="gray.600">Postcode:</Text>
+                <Text fontSize="md" fontWeight="medium" fontFamily="mono">
+                  {profile.address.postcode}
+                </Text>
+              </HStack>
+              <HStack justify="space-between" py={2}>
+                <Text fontFamily="Poppins" fontSize="md" color="gray.600">City:</Text>
+                <Text fontFamily="Poppins" fontSize="md" fontWeight="medium">
+                  {profile.address.city}
+                </Text>
+              </HStack>
+              <HStack justify="space-between" py={2}>
+                <Text fontFamily="Poppins" fontSize="md" color="gray.600">Region:</Text>
+                <Text fontFamily="Poppins" fontSize="md" fontWeight="medium">
+                  {profile.address.region}
+                </Text>
+              </HStack>
+            </VStack>
+          </Box>
+
+          {/* Previous Addresses - Only show if there are previous addresses */}
+          {profile.previous_addresses && profile.previous_addresses.length > 0 && (
+            <Box 
+              bg="white" 
+              p={6} 
+              borderRadius="xl" 
+              mb={6} 
+              border="1.5px solid"
+              borderColor="gray.100"
+              boxShadow="sm"
+            >
+              <HStack justify="space-between" mb={6}>
+                <Text fontWeight="bold" fontFamily="Poppins" fontSize="lg">
+                  Previous Addresses
+                </Text>
+                <Badge colorScheme="orange" variant="subtle" fontFamily="Poppins">
+                  {profile.previous_addresses.length} addresses
+                </Badge>
+              </HStack>
+              <VStack spacing={4} align="stretch">
+                {profile.previous_addresses.map((address, index) => (
+                  <Box 
+                    key={index} 
+                    p={4} 
+                    bg="gray.50" 
+                    borderRadius="lg" 
+                    border="1px solid" 
+                    borderColor="gray.200"
+                  >
+                    <HStack justify="space-between" mb={2}>
+                      <Text fontFamily="Poppins" fontSize="md" fontWeight="medium" color="gray.700">
+                        Address {index + 1}
+                      </Text>
+                      <Badge colorScheme="gray" variant="subtle" fontFamily="Poppins">
+                        Previous
+                      </Badge>
+                    </HStack>
+                    <Text fontFamily="Poppins" fontSize="md" color="gray.600" mb={2}>
+                      {formatAddress(address)}
+                    </Text>
+                    <HStack justify="space-between">
+                      <Text fontSize="sm" color="gray.500" fontFamily="Poppins">
+                        Postcode: {address.postcode}
+                      </Text>
+                      <Text fontSize="sm" color="gray.500" fontFamily="Poppins">
+                        City: {address.city}
+                      </Text>
+                    </HStack>
+                  </Box>
+                ))}
+              </VStack>
+            </Box>
+          )}
+
+          {/* ID Document - Only show if document exists */}
+          {!isCheckingID && hasIDDocument && (
+            <Box 
+              bg="white" 
+              p={6} 
+              borderRadius="xl" 
+              mb={6}
+              border="1.5px solid"
+              borderColor="gray.100"
+              boxShadow="sm"
+            >
+              <HStack justify="space-between" mb={0}>
+                <Text fontWeight="bold" fontFamily="Poppins" fontSize="lg">
+                  ID Document
+                </Text>
+              </HStack>
+              <VStack spacing={4} align="stretch" mt={6}>
+                <HStack 
+                  p={4} 
+                  bg="green.50" 
+                  borderRadius="lg" 
+                  border="1px solid" 
+                  borderColor="green.200"
+                  justify="center"
+                >
+                  <Icon as={CheckIcon} w={5} h={5} color="green.500" />
+                  <Text fontSize="sm" color="green.700" fontFamily="Poppins" fontWeight="medium">
+                    ID document uploaded successfully
+                  </Text>
+                </HStack>
+                <Text color="gray.600" fontFamily="Poppins" fontSize="md">
+                  Your uploaded ID document for verification purposes.
+                </Text>
+                <Box textAlign="center">
+                  <Image
+                    src={profile.id_document}
+                    alt="ID Document"
+                    maxH="400px"
+                    borderRadius="lg"
+                    boxShadow="md"
+                    mx="auto"
+                  />
+                </Box>
+
+                <HStack spacing={3}>
+                  <Button
+                    flex={1}
+                    variant="outline"
+                    color={config.accentColor}
+                    borderColor={config.accentColor}
+                    borderRadius="full"
+                    fontFamily="Poppins"
+                    fontWeight="semibold"
+                    leftIcon={<Icon as={ArrowDownTrayIcon} w={4} h={4} strokeWidth={2}/>}
+                    onClick={handleDownloadDocument}
+                    isLoading={isDownloading}
+                    loadingText="Downloading..."
+                    _hover={{ bg: config.accentLightColor }}
+                  >
+                    Download
+                  </Button>
+                  <Button
+                    flex={1}
+                    variant="solid"
+                    bg={config.accentColor}
+                    color="white"
+                    borderRadius="full"
+                    fontFamily="Poppins"
+                    fontWeight="semibold"
+                    leftIcon={<Icon as={PencilIcon} w={4} h={4} strokeWidth={2}/>}
+                    onClick={handleUpdateDocument}
+                    _hover={{ bg: `${config.accentColor}80` }}
+                  >
+                    Update
+                  </Button>
+                </HStack>
+              </VStack>
+            </Box>
+          )}
+
+          {/* ID Document Upload Section - Show when no document exists */}
+          {!isCheckingID && !hasIDDocument && (
+            <Box 
+              bg="white" 
+              p={6} 
+              borderRadius="xl" 
+              mb={6}
+              border="1.5px solid"
+              borderColor="gray.100"
+              boxShadow="sm"
+            >
+              <HStack justify="space-between" mb={0}>
+                <Text fontWeight="bold" fontFamily="Poppins" fontSize="lg">
+                  ID Document
+                </Text>
+              </HStack>
+              <VStack spacing={4} align="stretch" mt={6}>
+                <HStack 
+                  p={4} 
+                  bg="orange.50" 
+                  borderRadius="lg" 
+                  border="1px solid" 
+                  borderColor="orange.200"
+                  justify="center"
+                >
+                  <Icon as={ExclamationTriangleIcon} w={5} h={5} color="orange.500" />
+                  <Text fontSize="sm" color="orange.700" fontFamily="Poppins" fontWeight="medium">
+                    No ID uploaded - Upload required to access all features
+                  </Text>
+                </HStack>
+                <Button
+                  w="full"
+                  variant="solid"
+                  bg={config.accentColor}
+                  color="white"
+                  borderRadius="full"
+                  fontFamily="Poppins"
+                  fontWeight="semibold"
+                  leftIcon={<Icon as={DocumentIcon} w={4} h={4} strokeWidth={2}/>}
+                  onClick={handleUpdateDocument}
+                  _hover={{ bg: `${config.accentColor}80` }}
+                >
+                  Upload ID Document
+                </Button>
+              </VStack>
+            </Box>
+          )}
+
+          {/* Signature */}
+          <Box 
+            bg="white" 
+            p={6} 
+            borderRadius="xl" 
+            mb={6} 
+            border="1.5px solid"
+            borderColor="gray.100"
+            boxShadow="sm"
+          >
+            <Text fontWeight="bold" mb={6} fontFamily="Poppins" fontSize="lg">
+              Digital Signature
+            </Text>
+            <VStack spacing={4} align="stretch">
+              <Text color="gray.600" fontFamily="Poppins" fontSize="md">
+                Your digital signature for legal agreements and documents.
+              </Text>
+              <Box textAlign="center">
+                <Image
+                  src={profile.signature}
+                  alt="Digital Signature"
+                  maxH="200px"
+                  borderRadius="lg"
+                  boxShadow="md"
+                  mx="auto"
+                  bg="white"
+                  p={4}
+                />
+              </Box>
+
+            </VStack>
+          </Box>
+
+          {/* Continue Button */}
+          <Button
+            w="full"
+            bg={config.primaryColor}
+            color="black"
+            size="lg"
+            height="56px"
+            borderRadius="full"
+            _hover={{ bg: `${config.primaryColor}80` }}
+            fontFamily="Poppins"
+            fontSize="lg"
+            fontWeight="semibold"
+            boxShadow="sm"
+            onClick={() => navigate('/dashboard')}
+          >
+            Continue
+          </Button>
+        </VStack>
+      </Container>
+    </Box>
   );
 };
 

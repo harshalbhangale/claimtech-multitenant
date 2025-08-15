@@ -16,7 +16,7 @@ export const useUpdateSignature = ({
 
   return useMutation({
     mutationFn: ({ requirementId, signatureFile }: { requirementId: string; signatureFile: File }) => 
-      updateSignature(requirementId, signatureFile),
+      updateSignature(claimId, requirementId, signatureFile),
     
     onSuccess: () => {
       // Invalidate requirements to trigger refetch

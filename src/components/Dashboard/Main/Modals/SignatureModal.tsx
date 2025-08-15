@@ -21,7 +21,6 @@ import { useTenant } from '../../../../contexts/TenantContext';
 import { submitSignature, canvasToFile as onboardingCanvasToFile } from '../../../../api/services/onboarding/submitSignature';
 import { canvasToFile as dashboardCanvasToFile } from '../../../../api/services/dashboard/updateSignature';
 import { useUpdateSignature } from '../../../../hooks/mutations/useUpdateSignature';
-import { useUpdateRequirementStatus } from '../../../../hooks/mutations/useUpdateRequirementStatus';
 import SuccessMessage from '../../../Onboarding/Common/SuccessMessage';
 import ErrorMessage from '../../../Onboarding/Common/ErrorMessage';
 
@@ -70,31 +69,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
     }
   });
 
-  const updateRequirementStatusMutation = useUpdateRequirementStatus({
-    claimId: claimId || '',
-    onSuccess: () => {
-      setSuccess("Signature updated successfully!");
-      // Close modal immediately and call success callback
-      setTimeout(() => {
-        onSuccess?.();
-        onClose();
-      }, 500);
-    },
-    onError: (error) => {
-      console.error('Error updating requirement status:', error);
-      let errorMessage = 'Failed to update requirement status. Please try again.';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      setError(errorMessage);
-    }
-  });
-
-  const isSubmitting = updateSignatureMutation.isPending || updateRequirementStatusMutation.isPending;
+  const isSubmitting = updateSignatureMutation.isPending;
 
   // Calculate responsive canvas dimensions
   const updateCanvasDimensions = () => {
@@ -176,18 +151,16 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
       
       // Submit signature using appropriate method based on mode
       if (mode === 'dashboard') {
-        // Step 1: Update the signature using mutation
+        // Upload signature only — backend will mark requirement automatically
         await updateSignatureMutation.mutateAsync({
           requirementId: requirementId!,
           signatureFile
         });
-        
-        // Step 2: Mark requirement as completed using mutation
-        await updateRequirementStatusMutation.mutateAsync({
-          requirement_id: requirementId!,
-          status: 'completed',
-          document_file: signatureFile
-        });
+        setSuccess("Signature updated successfully!");
+        setTimeout(() => {
+          onSuccess?.();
+          onClose();
+        }, 500);
       } else {
         // Onboarding mode - use original API
         await submitSignature(signatureFile);
@@ -345,7 +318,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
               _hover={{ bg: `${config.primaryColor}CC` }}
               onClick={handleSubmit}
               isLoading={isSubmitting}
-              loadingText={mode === 'dashboard' ? "Updating signature..." : "Submitting signature..."}
+              loadingText={mode === 'dashboard' ? "Uploading signature..." : "Submitting signature..."}
               isDisabled={!hasSignature}
               borderRadius="full"
               px={8}

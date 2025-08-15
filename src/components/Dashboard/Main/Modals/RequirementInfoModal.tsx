@@ -24,6 +24,7 @@ import { DocumentIcon, CloudArrowUpIcon, CheckCircleIcon, ExclamationCircleIcon 
 
 import { useTenant } from '../../../../contexts/TenantContext';
 import { fetchRequirements, uploadRequirementDocument, type Requirement } from '../../../../api/services/dashboard/additionalRequirement';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AdditionalInfoModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ const AdditionalInfoModal: React.FC<AdditionalInfoModalProps> = ({
 }) => {
   const { config } = useTenant();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
@@ -47,6 +49,24 @@ const AdditionalInfoModal: React.FC<AdditionalInfoModalProps> = ({
       handleFetchRequirements();
     }
   }, [isOpen, claimId]);
+
+  // Debug logging to understand requirement filtering
+  useEffect(() => {
+    if (requirements.length > 0) {
+      console.log('All requirements:', requirements);
+      console.log('Requirement types found:', requirements.map(r => r.requirement_type));
+      console.log('Requirement reasons found:', requirements.map(r => r.requirement_reason));
+      
+      const filtered = requirements.filter((r) => {
+        const specialTypes = ['signature', 'previous_address', 'previous_name', 'id_document'];
+        const requirementType = (r.requirement_type as string) || '';
+        const isSpecial = specialTypes.includes(requirementType);
+        console.log(`Requirement ${r.id}: type="${requirementType}", isSpecial=${isSpecial}, reason="${r.requirement_reason}"`);
+        return !isSpecial;
+      });
+      console.log('Filtered requirements:', filtered);
+    }
+  }, [requirements]);
 
   const handleFetchRequirements = async () => {
     setLoading(true);
@@ -67,11 +87,14 @@ const AdditionalInfoModal: React.FC<AdditionalInfoModalProps> = ({
     }
   };
 
-  const handleFileUpload = async (requirementId: string, file: File) => {
+  const handleFileUpload = async (requirementId: string, file: File, requirementType?: string) => {
     setUploadingFiles(prev => new Set(prev).add(requirementId));
     
     try {
-      await uploadRequirementDocument(claimId, requirementId, file);
+      // Use id_document for ID document uploads, document_file for all other documents
+      const fileFieldName = requirementType === 'id_document' ? 'id_document' : 'document_file';
+      
+      await uploadRequirementDocument(claimId, requirementId, file, fileFieldName);
       
       toast({
         title: 'Success',
@@ -81,8 +104,12 @@ const AdditionalInfoModal: React.FC<AdditionalInfoModalProps> = ({
         isClosable: true,
       });
       
-      // Refresh requirements
+      // Refresh local modal list
       await handleFetchRequirements();
+
+      // Immediately update any other UI using React Query cache
+      queryClient.invalidateQueries({ queryKey: ['requirements', claimId] });
+      queryClient.refetchQueries({ queryKey: ['requirements', claimId] });
     } catch (error) {
       console.error('Error uploading document:', error);
       toast({
@@ -189,202 +216,177 @@ const AdditionalInfoModal: React.FC<AdditionalInfoModalProps> = ({
           ) : (
             <VStack spacing={{ base: 4, md: 6 }} align="stretch">
               {requirements
-                // Completely filter out signature requirements - they should never appear in document upload modal
-                .filter((requirement) => requirement.requirement_type !== 'signature')
-                .map((requirement, index) => {
-                const statusStyle = getStatusColor(requirement.status);
-                const isUploading = uploadingFiles.has(requirement.id);
-                const isNewRequirement = requirement.status === 'pending' && !requirement.document;
-                
-                return (
-                  <Box
-                    key={requirement.id}
-                    p={{ base: 4, md: 5 }}
-                    borderRadius={{ base: "lg", md: "xl" }}
-                    border="2px solid"
-                    borderColor={isNewRequirement ? config.accentColor : 'gray.200'}
-                    bg={isNewRequirement ? `${config.accentLightColor}20` : 'white'}
-                    position="relative"
-                    _hover={{
-                      transform: { base: 'none', md: 'translateY(-2px)' },
-                      boxShadow: 'lg',
-                      borderColor: isNewRequirement ? config.accentColor : config.accentColor,
-                    }}
-                    transition="all 0.3s ease"
-                  >
-                    {isNewRequirement && (
-                      <Badge
-                        position="absolute"
-                        top="-8px"
-                        right="12px"
-                        bg={config.accentColor}
-                        color="white"
-                        fontSize="xs"
-                        borderRadius="full"
-                        px={3}
-                        py={1}
-                        fontWeight="bold"
-                      >
-                        New Request
-                      </Badge>
-                    )}
-                    
-                    <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
-                      <VStack align="stretch" spacing={2}>
-                        <HStack 
-                          justify="space-between" 
-                          align={{ base: "start", md: "center" }}
-                          flexWrap={{ base: "wrap", md: "nowrap" }}
-                          spacing={{ base: 2, md: 3 }}
-                        >
-                          <Text fontSize={{ base: "xs", md: "sm" }} color="gray.500" fontWeight="medium">
-                            Requirement #{index + 1}
-                          </Text>
-                          <Badge
-                            bg={statusStyle.bg}
-                            color={statusStyle.color}
-                            borderRadius="full"
-                            px={{ base: 2, md: 3 }}
-                            py={1}
-                            fontSize="xs"
-                            fontWeight="semibold"
-                            border="1px solid"
-                            borderColor={statusStyle.borderColor}
-                            flexShrink={0}
+                .filter((r) => {
+                  // Show all requirements EXCEPT the special types that have their own action banners
+                  const specialTypes = ['signature', 'previous_address', 'previous_name', 'id_document'];
+                  const requirementType = (r.requirement_type as string) || '';
+                  
+                  // Special case: "Request proof for name change" should be shown in RequirementInfoModal
+                  // even if it's normalized to 'previous_name' by the API
+                  if (requirementType === 'previous_name' && r.requirement_reason && 
+                      r.requirement_reason.toLowerCase().includes('name change')) {
+                    return true; // Show it in the modal
+                  }
+                  
+                  // If it's a special type, exclude it (handled by action banners)
+                  if (specialTypes.includes(requirementType)) {
+                    return false;
+                  }
+                  
+                  // Include all other requirements (including generic document requests)
+                  return true;
+                })
+                .map((requirement, idx) => {
+                  const isUploading = uploadingFiles.has(requirement.id);
+                  const statusStyle = getStatusColor(requirement.status);
+                  return (
+                    <Box
+                      key={requirement.id}
+                      p={{ base: 4, md: 5 }}
+                      borderRadius={{ base: 'lg', md: 'xl' }}
+                      border="2px solid"
+                      borderColor={statusStyle.borderColor}
+                      bg={'white'}
+                      position="relative"
+                      transition="all 0.3s ease"
+                    >
+                      <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+                        <VStack align="stretch" spacing={2}>
+                          <HStack
+                            justify="space-between"
+                            align={{ base: 'start', md: 'center' }}
+                            flexWrap={{ base: 'wrap', md: 'nowrap' }}
+                            spacing={{ base: 2, md: 3 }}
                           >
-                            <HStack spacing={1}>
-                              {getStatusIcon(requirement.status)}
-                              <Text textTransform="capitalize">{requirement.status}</Text>
-                            </HStack>
-                          </Badge>
-                        </HStack>
-                        
-                        <Text fontSize={{ base: "sm", md: "md" }} fontWeight="semibold" color="gray.800" lineHeight="1.4">
-                          {requirement.requirement_reason}
-                        </Text>
-                        
-                        <Text fontSize={{ base: "2xs", md: "xs" }} color="gray.500">
-                          Requested on {formatDate(requirement.created_at)}
-                        </Text>
-                      </VStack>
-                      
-                      {requirement.rejected_reason && (
-                        <Box
-                          p={{ base: 3, md: 3 }}
-                          bg="red.50"
-                          borderRadius={{ base: "md", md: "lg" }}
-                          border="1px solid"
-                          borderColor="red.200"
-                        >
-                          <HStack spacing={2} align="start">
-                            <ExclamationCircleIcon width={16} height={16} color="#E53E3E" />
-                            <Text fontSize={{ base: "xs", md: "sm" }} color="red.600" fontWeight="medium">
-                              Rejection Reason:
+                            <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" fontWeight="medium">
+                              Requirement #{idx + 1}
                             </Text>
-                          </HStack>
-                          <Text fontSize={{ base: "xs", md: "sm" }} color="red.700" mt={1} lineHeight="1.4">
-                            {requirement.rejected_reason}
-                          </Text>
-                        </Box>
-                      )}
-                      
-                      {requirement.document && (
-                        <Box
-                          p={{ base: 3, md: 3 }}
-                          bg="green.50"
-                          borderRadius={{ base: "md", md: "lg" }}
-                          border="1px solid"
-                          borderColor="green.200"
-                        >
-                          <HStack spacing={2} align="start">
-                            <CheckCircleIcon width={16} height={16} color="#38A169" />
-                            <Text fontSize={{ base: "xs", md: "sm" }} color="green.600" fontWeight="medium">
-                              Document Uploaded
-                            </Text>
-                          </HStack>
-                          <Text fontSize={{ base: "2xs", md: "xs" }} color="green.700" mt={1}>
-                            Last updated: {formatDate(requirement.updated_at)}
-                          </Text>
-                        </Box>
-                      )}
-                      
-                      {(requirement.status === 'pending' || requirement.status === 'rejected') && (
-                        <Box>
-                          <FormControl>
-                            <FormLabel fontSize={{ base: "xs", md: "sm" }} fontWeight="semibold" color="gray.700" mb={3}>
-                              Upload Document
-                            </FormLabel>
-                            <Box
-                              position="relative"
-                              border="2px dashed"
-                              borderColor={isUploading ? "gray.300" : config.accentColor}
-                              borderRadius="xl"
-                              p={6}
-                              bg={isUploading ? "gray.50" : "white"}
-                              _hover={{ 
-                                borderColor: isUploading ? "gray.300" : "gray.300",
-                                bg: isUploading ? "gray.50" : "gray.50"
-                              }}
-                              transition="all 0.3s ease"
-                              cursor={isUploading ? "not-allowed" : "pointer"}
+                            <Badge
+                              bg={statusStyle.bg}
+                              color={statusStyle.color}
+                              borderRadius="full"
+                              px={{ base: 2, md: 3 }}
+                              py={1}
+                              fontSize="xs"
+                              fontWeight="semibold"
+                              border="1px solid"
+                              borderColor={statusStyle.borderColor}
+                              flexShrink={0}
                             >
-                              <Input
-                                type="file"
-                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    handleFileUpload(requirement.id, file);
-                                  }
-                                }}
-                                disabled={isUploading}
-                                position="absolute"
-                                top={0}
-                                left={0}
-                                width="100%"
-                                height="100%"
-                                opacity={0}
-                                cursor={isUploading ? "not-allowed" : "pointer"}
-                              />
-                              {isUploading ? (
-                                <VStack spacing={3}>
-                                  <Spinner size="lg" color={config.primaryColor} />
-                                  <VStack spacing={1}>
-                                    <Text fontSize="sm" fontWeight="semibold" color="gray.600">
-                                      Uploading document...
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.500">
-                                      Please wait while we process your file
-                                    </Text>
+                              <HStack spacing={1}>
+                                {getStatusIcon(requirement.status)}
+                                <Text textTransform="capitalize">{requirement.status}</Text>
+                              </HStack>
+                            </Badge>
+                          </HStack>
+
+                          <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="semibold" color="gray.800" lineHeight="1.4">
+                            {requirement.requirement_reason}
+                          </Text>
+
+                          <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500">
+                            Requested on {formatDate(requirement.created_at)}
+                          </Text>
+                        </VStack>
+
+                        {requirement.rejected_reason && (
+                          <Box p={{ base: 3, md: 3 }} bg="red.50" borderRadius={{ base: 'md', md: 'lg' }} border="1px solid" borderColor="red.200">
+                            <HStack spacing={2} align="start">
+                              <ExclamationCircleIcon width={16} height={16} color="#E53E3E" />
+                              <Text fontSize={{ base: 'xs', md: 'sm' }} color="red.600" fontWeight="medium">
+                                Rejection Reason:
+                              </Text>
+                            </HStack>
+                            <Text fontSize={{ base: 'xs', md: 'sm' }} color="red.700" mt={1} lineHeight="1.4">
+                              {requirement.rejected_reason}
+                            </Text>
+                          </Box>
+                        )}
+
+                        {requirement.document && (
+                          <Box p={{ base: 3, md: 3 }} bg="green.50" borderRadius={{ base: 'md', md: 'lg' }} border="1px solid" borderColor="green.200">
+                            <HStack spacing={2} align="start">
+                              <CheckCircleIcon width={16} height={16} color="#38A169" />
+                              <Text fontSize={{ base: 'xs', md: 'sm' }} color="green.600" fontWeight="medium">
+                                Document Uploaded
+                              </Text>
+                            </HStack>
+                            <Text fontSize={{ base: '2xs', md: 'xs' }} color="green.700" mt={1}>
+                              Last updated: {formatDate(requirement.updated_at)}
+                            </Text>
+                          </Box>
+                        )}
+
+                        {(requirement.status === 'pending' || requirement.status === 'rejected') && (
+                          <Box>
+                            <FormControl>
+                              <FormLabel fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="gray.700" mb={3}>
+                                Upload Document
+                              </FormLabel>
+                              <Box
+                                position="relative"
+                                border="2px dashed"
+                                borderColor={isUploading ? 'gray.300' : config.accentColor}
+                                borderRadius="xl"
+                                p={6}
+                                bg={isUploading ? 'gray.50' : 'white'}
+                                _hover={{ borderColor: isUploading ? 'gray.300' : 'gray.300', bg: isUploading ? 'gray.50' : 'gray.50' }}
+                                transition="all 0.3s ease"
+                                cursor={isUploading ? 'not-allowed' : 'pointer'}
+                              >
+                                <Input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      handleFileUpload(requirement.id, file, requirement.requirement_type);
+                                    }
+                                  }}
+                                  disabled={isUploading}
+                                  position="absolute"
+                                  top={0}
+                                  left={0}
+                                  width="100%"
+                                  height="100%"
+                                  opacity={0}
+                                  cursor={isUploading ? 'not-allowed' : 'pointer'}
+                                />
+                                {isUploading ? (
+                                  <VStack spacing={3}>
+                                    <Spinner size="lg" color={config.primaryColor} />
+                                    <VStack spacing={1}>
+                                      <Text fontSize="sm" fontWeight="semibold" color="gray.600">
+                                        Uploading document...
+                                      </Text>
+                                      <Text fontSize="xs" color="gray.500">
+                                        Please wait while we process your file
+                                      </Text>
+                                    </VStack>
                                   </VStack>
-                                </VStack>
-                              ) : (
-                                <VStack spacing={3}>
-                                  <Circle 
-                                    size="48px" 
-                                    bg={`${config.accentColor}20`} 
-                                    color={config.accentColor}
-                                  >
-                                    <CloudArrowUpIcon width={24} height={24} />
-                                  </Circle>
-                                  <VStack spacing={1}>
-                                    <Text fontSize="sm" fontWeight="semibold" color="gray.700">
-                                      Drop your file here or click to browse
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.500">
-                                      PDF, DOC, DOCX, JPG, PNG up to 10MB
-                                    </Text>
+                                ) : (
+                                  <VStack spacing={3}>
+                                    <Circle size="48px" bg={`${config.accentColor}20`} color={config.accentColor}>
+                                      <CloudArrowUpIcon width={24} height={24} />
+                                    </Circle>
+                                    <VStack spacing={1}>
+                                      <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                                        Drop your file here or click to browse
+                                      </Text>
+                                      <Text fontSize="xs" color="gray.500">
+                                        PDF, DOC, DOCX, JPG, PNG up to 10MB
+                                      </Text>
+                                    </VStack>
                                   </VStack>
-                                </VStack>
-                              )}
-                            </Box>
-                          </FormControl>
-                        </Box>
-                      )}
-                    </VStack>
-                  </Box>
-                );
-              })}
+                                )}
+                              </Box>
+                            </FormControl>
+                          </Box>
+                        )}
+                      </VStack>
+                    </Box>
+                  );
+                })}
             </VStack>
           )}
           

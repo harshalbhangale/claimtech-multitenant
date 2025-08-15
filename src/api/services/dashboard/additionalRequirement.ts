@@ -9,7 +9,13 @@ interface Requirement {
   document: string | null;
   created_at: string;
   updated_at: string;
-  requirement_type?: 'document' | 'signature' | 'information' | 'other'; // Add type to distinguish requirement types
+  // Normalized, more granular type derived from backend field (if present) or reason text
+  requirement_type?:
+    | 'signature'
+    | 'previous_address'
+    | 'previous_name'
+    | 'id_document'
+    | 'other';
 }
 
 /**
@@ -20,11 +26,20 @@ interface Requirement {
 export const fetchRequirements = async (claimId: string): Promise<Requirement[]> => {
   try {
     const response = await api.get(`/api/v1/claims/${claimId}/requirements/`);
-    // Process requirements to detect signature requirements
-    const requirements = response.data.map((req: Requirement) => ({
-      ...req,
-      requirement_type: detectRequirementType(req.requirement_reason)
-    }));
+    // Process requirements to detect granular requirement types
+    const requirements = response.data.map((req: any) => {
+      // Prefer backend-provided type if available
+      const backendType: string | undefined = req?.requirement_type;
+      const normalized: Requirement['requirement_type'] = normalizeRequirementType(
+        backendType,
+        req?.requirement_reason || ''
+      );
+      return {
+        ...req,
+        requirement_type: normalized,
+        backend_type: backendType,
+      } as Requirement;
+    });
     return requirements;
   } catch (error) {
     console.error('Error fetching requirements:', error);
@@ -37,37 +52,78 @@ export const fetchRequirements = async (claimId: string): Promise<Requirement[]>
  * @param requirementReason - The requirement reason text
  * @returns 'signature' or 'document'
  */
-const detectRequirementType = (requirementReason: string): 'document' | 'signature' => {
-  const signatureKeywords = [
-    'signature',
-    'sign',
-    'digital signature',
-    'kindly send the signature',
-    'kindly upload your digital signature',
-    'please provide your signature',
-    'Kindly provide your digital signature again.',
-    'Kindly provide your signature again.',
-    'Kindly provide your signature',
-    'Kindly provide your digital signature',
-    'Kindly send the signature',
-    'Kindly upload your signature',
-    'Kindly send the digital signature',
-    'Kindly upload the digital signature',
+const normalizeRequirementType = (
+  backendType: string | undefined,
+  requirementReason: string
+): Requirement['requirement_type'] => {
+  const lowerType = (backendType || '').toLowerCase();
+  if (
+    lowerType === 'signature' ||
+    lowerType === 'previous_address' ||
+    lowerType === 'previous_name' ||
+    lowerType === 'name_change' ||
+    lowerType === 'id_document'
+  ) {
+    // Normalize name_change to previous_name
+    if (lowerType === 'name_change') {
+      return 'previous_name' as Requirement['requirement_type'];
+    }
+    return lowerType as Requirement['requirement_type'];
+  }
+
+  // Fallback to reason-text detection when backend type is missing
+  const reason = (requirementReason || '').toLowerCase();
+
+  const keywordGroups: Array<{ type: Requirement['requirement_type']; keywords: string[] }> = [
+    {
+      type: 'signature',
+      keywords: [
+        'signature',
+        'sign',
+        'digital signature',
+        'upload your signature',
+        'send the signature',
+      ],
+    },
+    {
+      type: 'previous_address',
+      keywords: [
+        'previous address',
+        'prior address',
+        'old address',
+        'address history',
+      ],
+    },
+    {
+      type: 'previous_name',
+      keywords: [
+        'previous name',
+        'former name',
+        'maiden name',
+        'name change',
+      ],
+    },
+    {
+      type: 'id_document',
+      keywords: [
+        'id document',
+        'identification',
+        'passport',
+        'driving licence',
+        'driver’s license',
+        "driver's license",
+        'identity card',
+      ],
+    },
   ];
-  
-  const lowerReason = requirementReason.toLowerCase();
-  const isSignatureRequirement = signatureKeywords.some(keyword => 
-    lowerReason.includes(keyword.toLowerCase())
-  );
-  
-  console.log('Requirement detection:', {
-    reason: requirementReason,
-    lowerReason,
-    isSignatureRequirement,
-    type: isSignatureRequirement ? 'signature' : 'document'
-  });
-  
-  return isSignatureRequirement ? 'signature' : 'document';
+
+  for (const group of keywordGroups) {
+    if (group.keywords.some((k) => reason.includes(k))) {
+      return group.type;
+    }
+  }
+
+  return 'other';
 };
 
 /**
@@ -75,21 +131,25 @@ const detectRequirementType = (requirementReason: string): 'document' | 'signatu
  * @param claimId - The ID of the claim
  * @param requirementId - The ID of the requirement
  * @param file - The file to upload
+ * @param fileFieldName - The field name for the file in the upload form
  * @returns Promise with upload response
  */
 export const uploadRequirementDocument = async (
   claimId: string,
   requirementId: string,
-  file: File
+  file: File,
+  fileFieldName: 'document_file' | 'id_document' = 'document_file'
 ): Promise<any> => {
   try {
     const formData = new FormData();
     formData.append('requirement_id', requirementId);
-    formData.append('document_file', file);
+    formData.append(fileFieldName, file);
     
+    // For FormData uploads, we need to remove the Content-Type header
+    // so the browser can set it automatically with the correct boundary
     const response = await api.put(`/api/v1/claims/${claimId}/requirements/`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': undefined, // Remove the default Content-Type header
       },
     });
     
