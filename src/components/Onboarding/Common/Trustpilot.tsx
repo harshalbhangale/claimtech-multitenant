@@ -2,12 +2,18 @@ import React from 'react';
 import { Box, HStack, Text } from '@chakra-ui/react';
 
 interface TrustpilotProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs'|'sm' | 'md' | 'lg';
 }
 
 const Trustpilot: React.FC<TrustpilotProps> = ({ size = 'md' }) => {
   // Size variants with responsive adjustments
   const sizeConfig = {
+    xs: {
+      fontSize: { base: 'xs', md: 'xs' },
+      starHeight: { base: '14px', md: '16px' },
+      logoHeight: { base: '12px', md: '14px' },
+      spacing: { base: 1, md: 2 }
+    },
     sm: {
       fontSize: { base: 'xs', md: 'xs' },
       starHeight: { base: '14px', md: '16px' },

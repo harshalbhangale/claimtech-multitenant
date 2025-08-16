@@ -18,9 +18,9 @@ import OtpVerify from './components/Onboarding/OtpVerify';
 import MissingAgreements from './components/Onboarding/MissingAgreements';
 import NotFound from './pages/NotFound';
 import ReferPage from './pages/Refer';
-
 import EmailSuccessful from './components/Login/EmailSuccessful';
 import MagicLogin from './components/Login/MagicLogin';
+
 
 const router = createBrowserRouter([
   {

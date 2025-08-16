@@ -6,17 +6,16 @@ import {
   Text,
   HStack,
   Flex,
-  Button as ChakraButton,
+  Button
 } from '@chakra-ui/react';
 // @ts-ignore - library lacks type definitions
 import SignatureCanvas from 'react-signature-canvas';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../Common/Header';
-import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
-import { SecureBar } from '../Common/Securebar';
 import { useTenant } from '../../../contexts/TenantContext';
-import Button from '../Common/CustomButton';
 
+import WhatHappensAfterSigning from './WhatHappensAfterSigning';
+import { Footer } from '../Common/Footer';
 import { saveSignature, clearSignature } from '../../../utils/signatureStorage';
 import { submitSignature, canvasToFile } from '../../../api/services/onboarding/submitSignature';
 import { ensureCheckioScript } from '../../../utils/checkioFingerprint';
@@ -24,6 +23,7 @@ import { startPcpCreditReport } from '../../../api/services/onboarding/checkio';
 import { storeChallengeData } from '../../../utils/checkioStorage';
 import { getLenderSelection, getUserDetails } from '../../../utils/onboardingStorage';
 import Trustpilot from '../Common/Trustpilot';
+import { FileDown } from 'lucide-react';
 
 const SignatureStep: React.FC = () => {
   const sigCanvasRef = useRef<any>(null);
@@ -38,8 +38,8 @@ const SignatureStep: React.FC = () => {
   const [, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
-  const [claimAmount, setClaimAmount] = useState<string>('£6,427*');
-  const [firstName, setFirstName] = useState<string>('');
+  const [_claimAmount, setClaimAmount] = useState<string>('£6,427*');
+  const [_firstName, setFirstName] = useState<string>('');
 
   // Calculate responsive canvas dimensions
   const updateCanvasDimensions = () => {
@@ -306,38 +306,123 @@ const SignatureStep: React.FC = () => {
       <Container maxW="3xl" pt={{ base: 2, md: 3 }} pb={{ base: 4, md: 6 }} px={{ base: 6, sm: 8, lg: 12 }}>
         <VStack spacing={{ base: 4, md: 6 }} align="stretch">
           {/* Main Card */}
-          <Box border="1.5px solid #E2E8F0" borderRadius="2xl" p={6} w="full">
-            <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="gray.900" fontFamily="Poppins">
-              Great news{firstName ? `, ${firstName}` : ''}!
-            </Text>
-            <Flex align="center" mb={2} flexWrap="wrap" gap={1}>
-              <Text fontSize={{ base: 'sm', md: 'sm' }} color="gray.900" fontWeight="bold" fontFamily="Poppins">
-                Final step to potentially claiming up to
-              </Text>
-              <Text as="span" color="#50C878" fontWeight="bold" fontFamily="Poppins">
-                {claimAmount}
-              </Text>
-              <Text fontSize="lg" ml={1}>
-                🎉
-              </Text>
-            </Flex>
+          <Box border="1.5px solid #E2E8F0" borderRadius="2xl" p={{ base: 4, md: 6 }} w="full">
+            {/* Trustpilot at top */}
+            <VStack mb={2}>
+              <Trustpilot size="xs" />
+            </VStack>
 
-            <Text fontSize={{ base: 'xs', md: 'xs' }} color="gray.700" mb={6} fontFamily="Poppins">
-              Please read the documents below before signing. They allow us to transfer your claim
-              to our third party so they can make a claim on your behalf; this is No-Win-No-Fee, so
-              you will only be charged if compensation is recovered.
+            {/* Main heading */}
+            <Text fontSize={{ base: 'xl', md: '3xl' }} fontWeight="bold" color="gray.900" fontFamily="Poppins" textAlign="center" mb={2}>
+              You're almost there!
             </Text>
 
-            {/* Enhanced Signature Canvas */}
-            <Box mb={4} position="relative">
+            {/* Description */}
+            <Text fontSize={{ base: 'sm', md: 'sm' }} color="gray.700" mb={6} fontFamily="Poppins" fontWeight="bold" textAlign="center" lineHeight="1.5">
+              Please read the documents below before signing. They allow us to look into your claim and our solicitors to make the claim on your behalf. This is No-Win No-Fee, so you will only be charged if compensation is recovered.
+            </Text>
+
+            {/* Document Links */}
+            <VStack spacing={{ base: 2, md: 3 }} align="stretch" mb={{ base: 4, md: 6 }}>
+              <HStack
+                as="a"
+                href="https://claim.resolvemyclaim.co.uk/claim-requirements/pdf/preview/prowse_phillips_cfa"
+                target="_blank"
+                rel="noopener noreferrer"
+                spacing={{ base: 2, md: 3 }}
+                p={{ base: 2, md: 3 }}
+                border="1px solid #E2E8F0"
+                borderRadius="lg"
+                _hover={{ bg: '#F9FAFB' }}
+                cursor="pointer"
+              >
+                <FileDown  width={20} height={20} color={config.accentColor} />
+                <Text fontSize={{ base: "xs", md: "sm" }} color="gray.900" fontWeight="medium" flex="1" fontFamily="Poppins">
+                  Prowse Phillips - No win, no fee agreement
+                </Text>
+              </HStack>
+              <HStack
+                as="a"
+                href="https://claim.resolvemyclaim.co.uk/claim-requirements/pdf/preview/solvo_solutions_form_of_authority"
+                target="_blank"
+                rel="noopener noreferrer"
+                spacing={{ base: 2, md: 3 }}
+                p={{ base: 2, md: 3 }}
+                border="1px solid #E2E8F0"
+                borderRadius="lg"
+                _hover={{ bg: '#F9FAFB' }}
+                cursor="pointer"
+              >
+                <FileDown  width={20} height={20} color={config.accentColor} />
+                <Text fontSize={{ base: "xs", md: "sm" }} color="gray.900" fontWeight="medium" flex="1" fontFamily="Poppins">
+                  Solvo Solutions - Form of Authority
+                </Text>
+              </HStack>
+              <HStack
+                as="a"
+                href="https://claim.resolvemyclaim.co.uk/claim-requirements/pdf/preview/prowse_phillips_form_of_authority"
+                target="_blank"
+                rel="noopener noreferrer"
+                spacing={{ base: 2, md: 3 }}
+                p={{ base: 2, md: 3 }}
+                border="1px solid #E2E8F0"
+                borderRadius="lg"
+                _hover={{ bg: '#F9FAFB' }}
+                cursor="pointer"
+              >
+                <FileDown width={20} height={20} color={config.accentColor} />
+                <Text fontSize={{ base: "xs", md: "sm" }} color="gray.900" fontWeight="medium" flex="1" fontFamily="Poppins">
+                  Prowse Phillips - Form of Authority
+                </Text>
+              </HStack>
+            </VStack>
+
+            {/* Signature instruction */}
+            <Box
+              sx={{
+                borderLeft: '1px solid #171331',
+                display: 'flex',
+                paddingLeft: '15px',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '10px',
+                alignSelf: 'stretch',
+              }}
+              mb={2}
+            >
+              <Text
+                fontSize={{ base: 'xs', md: 'sm' }}
+                fontFamily="Poppins"
+                textAlign="left"
+                fontWeight="bold"
+              >
+                Ensure your signature closely matches the one on your driving licence or passport for verification.
+              </Text>
+            </Box>
+            
+            <HStack spacing={1}  align="left" mb={1}>
+              <Box as="span" fontSize="lg" display="flex" alignItems="center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="15" viewBox="0 0 19 15" fill="none">
+                  <path d="M9.48482 9.6959C9.29685 9.67508 8.52829 9.81133 8.19178 9.75897C7.88215 9.7108 7.5607 9.72744 6.96558 9.6959C4.74618 9.57828 4.24037 9.74825 3.87074 9.8006C3.46298 9.85836 3.12518 9.91603 2.76691 10.0106C2.43394 10.0986 2.26167 10.2314 2.15665 10.3257C2.10625 10.371 2.09325 10.4408 2.12416 10.5042C2.28912 10.8426 2.82746 10.736 3.25764 10.8098C3.91239 10.9221 4.83959 10.8836 5.60124 10.936C6.841 11.0212 7.55439 11.0098 8.17727 11.0621C9.09078 11.1389 9.51228 11.1359 9.89169 11.2091C10.4816 11.3229 10.8167 11.4084 11.0804 11.5349C11.1413 11.5641 11.175 11.6393 11.1756 11.7027C11.1769 11.835 11.0293 11.9345 10.8618 12.0184C10.6254 12.1368 10.3361 12.166 9.15811 12.4057C8.10414 12.6201 6.12761 13.0408 5.04648 13.2761C3.83738 13.5392 3.23304 13.6792 2.414 13.8053C1.61009 13.869 1.35778 13.9321 1.20041 13.9636C1.12629 13.9744 1.06385 13.9744 0.999512 13.9744" stroke="#171331" stroke-linecap="round"/>
+                  <path d="M9.70081 6.40771C9.00712 7.10139 8.61719 8.04167 8.61719 9.0229V10.2644H9.85866C10.8399 10.2644 11.7802 9.87445 12.4739 9.18076L18.2819 3.37271C19.0473 2.60735 19.0473 1.36502 18.2819 0.599656C17.5165 -0.165706 16.2742 -0.165706 15.5089 0.599656L9.70081 6.40771Z" fill="#5B34C9"/>
+                </svg>
+              </Box>
+              <Text fontSize={{ base: 'sm', md: 'md' }} color={config.accentColor} fontWeight="medium" fontFamily="Poppins">
+                Add your signature below using your finger or mouse
+              </Text>
+            </HStack>
+
+            {/* Signature Canvas */}
+            <Box mb={{ base: 4, md: 6 }} position="relative">
               <Box 
                 ref={canvasContainerRef}
                 position="relative" 
-                border="1px solid #E2E8F0"
+                border="2px solid #E2E8F0"
                 borderRadius="lg"
                 bg="#F8F9FA"
                 overflow="hidden"
                 width="100%"
+                minH={{ base: "150px", md: "200px" }}
               >
                 <SignatureCanvas
                   ref={sigCanvasRef}
@@ -372,124 +457,61 @@ const SignatureStep: React.FC = () => {
                     align="center"
                     color="gray.400"
                   >
-                    <Text fontSize="2xl" fontWeight="normal" color="gray.300" fontStyle="italic" fontFamily="Poppins">
+                    <Text fontSize="xl" fontWeight="normal" color="gray.400" fontStyle="italic" fontFamily="Poppins">
                       Sign Here
                     </Text>
                   </Flex>
                 )}
-
-                {/* Reset Button */}
-                <Box position="absolute" top={2} right={2} zIndex={1}>
-                  <ChakraButton
-                    size="sm"
-                    variant="ghost"
-                    color={config.accentColor}
-                    onClick={handleClear}
-                    fontWeight="bold"
-                    fontSize="sm"
-                    fontFamily="Poppins"
-                    _hover={{ bg: 'transparent', textDecoration: 'underline' }}
-                    isDisabled={!hasSignature}
-                    opacity={hasSignature ? 1 : 0.5}
-                  >
-                    Reset
-                  </ChakraButton>
-                </Box>
               </Box>
             </Box>
 
-
-            {/* Submit Button */}
-            <Button
-              onClick={handleSubmit}
-              fontWeight="bold"
-              mb={6}
-              isLoading={isLoading}
-              loadingText="Submitting signature..."
-              _hover={{ bg: `${config.primaryColor}CC` }}
-            >
-              Find my agreements
-            </Button>
-
-            {/* Bottom Centered Content */}
-            <VStack spacing={4} mb={6} align="center">
-              {/* Trustpilot Rating */}
-              <Trustpilot size="md" />
-
-            </VStack>
-
-            {/* Disclaimer Text */}
-            <Text fontSize="xs" fontWeight="medium" color="gray.600" fontFamily="Poppins">
-              By signing above and clicking 'Find my agreements', you agree that we will run a soft
-              credit check (powered by Checkboard IP Ltd) to identify any potential car finance
-              claims. These searches will not impact your credit score but will verify any
-              agreements that are found. You are signing all documents related to your claim.
-              Copies will be emailed to you once the third party begins your claim(s), and they will
-              keep you updated thereafter. You agree that your electronic signature may be used for
-              each Letter of Authority and Conditional Fee Agreement that is applicable to your
-              claim, without further permission. By signing here you understand that Solvo
-              Solutions Ltd will receive a marketing fee from the chosen panel law firm for making
-              the introduction. You understand that this fee is not deducted from your compensation
-              and that if you would like to know the exact fee that you are free to ask.
-            </Text>
-          </Box>
-
-          {/* View Files Section */}
-          <Box>
-            <Text fontWeight="bold" color="gray.900" fontFamily="Poppins" mb={2}>
-              View Files
-            </Text>
-            <Text fontSize="sm" color="gray.700" fontFamily="Poppins" mb={4}>
-              By proceeding you confirm that you agree to both Resolve My Claim's letter of
-              authority, allowing them to investigate your claims, and Prowse Phillips Law's letter
-              of authority and terms of business, allowing them to submit any car finance claims.
-            </Text>
-            
-            {/* Files List */}
-            <VStack spacing={3} align="stretch" mb={6}>
-              <HStack
-                as="a"
-                href="https://claim.resolvemyclaim.co.uk/claim-requirements/pdf/preview/prowse_phillips_cfa"
-                target="_blank"
-                rel="noopener noreferrer"
-                spacing={3}
-                p={3}
-                border="1px solid #E2E8F0"
-                borderRadius="lg"
-                _hover={{ bg: '#F9FAFB' }}
-                cursor="pointer"
+            {/* Action Buttons */}
+            <HStack spacing={3} w="full" mb={{ base: 4, md: 6 }}>
+              <Button
+                flex="1"
+                size={{ base: "md", md: "lg" }}
+                variant="outline"
+                color="gray.600"
+                borderColor="gray.300"
+                bg="gray.100"
+                onClick={handleClear}
+                fontWeight="medium"
+                fontSize={{ base: "sm", md: "md" }}
+                fontFamily="Poppins"
+                borderRadius={{ base: "xl", md: "2xl" }}
+                _hover={{ bg: 'gray.200' }}
+                isDisabled={!hasSignature}
+                h="64px"
               >
-                <ArrowDownTrayIcon width={20} height={20} color={config.accentColor} />
-                <Text fontSize="sm" color="gray.900" fontWeight="medium" flex="1" fontFamily="Poppins">
-                  Prowse Phillips – No win, no fee agreement
-                </Text>
-              </HStack>
-              <HStack
-                as="a"
-                href="https://claim.resolvemyclaim.co.uk/claim-requirements/pdf/preview/my_claims_centre_form_of_authority"
-                target="_blank"
-                rel="noopener noreferrer"
-                spacing={3}
-                p={3}
-                border="1px solid #E2E8F0"
-                borderRadius="lg"
-                _hover={{ bg: '#F9FAFB' }}
-                cursor="pointer"
+                Clear
+              </Button>
+              <Button
+                flex="1"
+                size={{ base: "md", md: "lg" }}
+                bg={config.primaryColor}
+                color="black"
+                onClick={handleSubmit}
+                fontWeight="bold"
+                fontSize={{ base: "sm", md: "md" }}
+                fontFamily="Poppins"
+                borderRadius={{ base: "xl", md: "2xl" }}
+                _hover={{ bg: `${config.primaryColor}CC` }}
+                isLoading={isLoading}
+                loadingText="Submitting..."
+                isDisabled={!hasSignature}
+                h="64px"
               >
-                <ArrowDownTrayIcon width={20} height={20} color={config.accentColor} />
-                <Text fontSize="sm" color="gray.900" fontWeight="medium" flex="1" fontFamily="Poppins">
-                  Resolve My Claim – Form of Authority
-                </Text>
-              </HStack>
-            </VStack>
+                Submit
+              </Button>
+            </HStack>
+
           </Box>
 
-          {/* Secure Bar */}
-          <Box w="full" maxW={{ base: 'full', md: '2xl' }}>
-            <SecureBar />
-          </Box>
+          {/* What Happens After Signing */}
+          <WhatHappensAfterSigning />
         </VStack>
       </Container>
+      <Footer />
     </Box>
   );
 };
